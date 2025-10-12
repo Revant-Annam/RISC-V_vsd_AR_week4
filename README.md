@@ -1,5 +1,164 @@
 # **Week 4 : CMOS Circuit Design & Analysis (sky130)**
 
+## 1. **CMOS Circuit Design and SPICE Simulations**
+
+### **What is Circuit Design?**
+
+**Circuit design** is the process of creating an electronic circuit by connecting multiple components, primarily **transistors**, to achieve a specific function. The goal is to arrange these building blocks in a way that they collectively perform a desired task—like acting as a logic gate, an amplifier, or a memory cell. Effective design involves not just achieving the correct functionality, but also optimizing for performance metrics such as **speed**, **power consumption**, and **physical area** (PPA).
+
+### **What are SPICE Simulations?**
+
+**SPICE (Simulation Program with Integrated Circuit Emphasis)** simulation is the process of creating a designed circuit virtually to test its behavior before it's manufactured. The simulator calculates and generates graphs to observe key characteristics like: drain, transfer, Voltage transfer curves, etc. From these graphs, we can extract critical parameters like **propagation delay**, **rise/fall times**, **power consumption**, and **noise margins**. If these parameters don't meet the design requirements, we can tune the circuit—for example, by changing transistor sizes (W/L ratios)—and re-run the simulation until the desired performance is achieved.
+
+### **Why do we use SPICE simulations**
+
+  * **Verify Functionality:** Ensure that logic gates and complex circuits operate as intended according to their truth tables.
+  * **Analyze Performance:** Measure critical performance metrics like speed, propagation delay, and rise/fall times.
+  * **Evaluate Power Consumption:** Assess static and dynamic power draw to optimize for efficiency.
+  * **Optimize and Debug:** Experiment with transistor sizing, layout, and other parameters to improve performance and fix issues early in the design cycle.
+
+### **CMOS Inverter: An Example**
+
+The CMOS inverter is the most fundamental logic gate in digital electronics. Its design and analysis demonstrate the core principles of CMOS technology.
+
+#### **Circuit Structure and Analysis**
+
+(image of the inverter circuit)
+
+The inverter consists of a complementary pair of transistors: one PMOS and one NMOS.
+
+  * The **PMOS** transistor connects the output to the power supply (**VDD**). It acts as a "pull-up" network.
+  * The **NMOS** transistor connects the output to the ground (**VSS**). It acts as a "pull-down" network.
+  * The inputs of both transistors are tied together to form the single input (**Vin**).
+  * The drains of both transistors are tied together to form the output (**Vout**).
+
+**The Operation:**
+
+| Input (Vin) | PMOS State | NMOS State | Output (Vout) |
+| :---------- | :--------- | :--------- | :------------ |
+| **Low (0V)** | **ON** | OFF        | **High (VDD)** |
+| **High (VDD)**| OFF        | **ON** | **Low (0V)** |
+
+**SPICE Simulations:**
+
+(image of plots of the drain and VTC curve)
+
+1.  **Drain Characteristics - Top Graph:** It shows the relationship between the drain-source current (Ids) and the output voltage (Vout) for various input voltages (Vin).
+2.  **Voltage Transfer Characteristic (VTC) - Bottom Graph:** It shows how the output voltage (Vout) varies with the input voltage (Vin) to analyze the inverter's switching behavior and logic levels.
+
+**Cell Delays:**
+
+Static Timing Analysis (STA) tools rely on pre-characterized models of standard cells to calculate timing. These models are generated using thousands of SPICE simulations. A cell's delay is not a single value but depends on two key factors:
+
+1.  **Input Slew:** The transition time of the signal arriving at the cell's input pin.
+2.  **Output Load:** The total capacitance the cell's output must drive. The total capacitive load at a gate's output is the sum of all capacitances connected to that net.
+
+(image of the LUT and the buffer system)
+
+This data is stored in **2D Lookup Tables (LUTs)** within the cell's timing library (`.lib` file). STA tools use these tables to accurately determine delay.
+
+To find the delay for a specific condition not listed in the table, the tool performs **interpolation** between the nearest characterized points. This allows for accurate delay calculation across a continuous range of operating conditions. For ensuring that the delay values are correct we need to do SPICE simulations. In the above example we can see that there is a CTS where each buffer has a different LUT.
+
+## **2. NMOS Transistor Fundamentals**
+
+The NMOS transistor is the basic fundamentals of modern digital circuits. Understanding its physical behavior is key to designing better circuits. Below is the basic circuit of the NMOS and the initial conditions we are assuming:
+
+(image of the NMOS with the initial conditions)
+
+#### **Regions of Operation**
+
+The transistor's mode of operation is determined by its terminal voltages, primarily $V_{GS}$ (Gate-Source) and $V_{DS}$ (Drain-Source).
+
+  * **Accumulation:** From the initial conditions the $V_{GS}$ increases and positive charge accumation occurs at the gate terminal. Due to the positive charges at the gate terminal, the positive charges from the p substrate near the oxide rejion are repelled leaving behind the negative charges.
+  * **Linear/Resistive Region ($V_{GS} > V_{t}$ and $V_{DS} < V_{GS} - V_{t}$):** A conductive channel is formed. The transistor acts like a voltage-controlled **resistor**. The drain current ($I_D$) is given by:
+    $$I_D = \mu_n C_{ox} \frac{W}{L} \left( (V_{GS} - V_t)V_{DS} - \frac{V_{DS}^2}{2} \right)$$
+  * **Saturation Region ($V_{GS} > V_{t}$ and $V_{DS} \ge V_{GS} - V_{t}$):** The channel is "pinched off" near the drain. The transistor acts like a voltage-controlled **current source**, and the current becomes largely independent of $V_{DS}$.
+    $$I_D = \frac{1}{2} \mu_n C_{ox} \frac{W}{L} (V_{GS} - V_t)^2 (1 + \lambda V_{DS})$$
+    The term $(1 + \lambda V_{DS})$ accounts for **channel length modulation**.
+
+#### **The Body Effect**
+
+The threshold voltage ($V_t$) is not constant. It increases if a reverse bias exists between the source and the transistor's body (substrate), i.e., when $V_{SB} > 0$. This is known as the **body effect**.
+
+[Image illustrating the body effect on channel formation]
+
+The change in threshold voltage is modeled by:
+$$V_t = V_{t0} + \gamma (\sqrt{|2\phi_f + V_{SB}|} - \sqrt{|2\phi_f|})$$
+Here, $\gamma$ and $\phi_f$ are process-dependent parameters provided by the foundry. The body effect is critical to model accurately, especially in stacked or complex logic gates.
+
+-----
+
+### **5. Hands-On Lab: Simulating an NMOS Transistor with sky130**
+
+This section outlines the practical steps to simulate the I-V characteristics of a sky130 NMOS transistor using `ngspice`.
+
+#### **1. Clone the Workshop Repository**
+
+First, obtain the necessary model files and example netlists.
+
+```bash
+git clone https://github.com/kunalg123/sky130CircuitDesignWorkshop.git
+```
+
+#### **2. SPICE Netlist Example**
+
+The following SPICE deck (`day1_nfet_idvds_L2_W5.spice`) is used to characterize an NMOS transistor.
+
+\<details\> \<summary\>\<strong\>Click to view `day1_nfet_idvds_L2_W5.spice`\</strong\>\</summary\>
+
+```spice
+* NMOS I-V Characterization for sky130 (W=5u, L=2u)
+* This netlist sweeps Vds for different Vgs values.
+
+*** Include the sky130 typical-typical (tt) corner model library ***
+.lib "sky130_fd_pr/models/sky130.lib.spice" tt
+
+*** Netlist Description ***
+* M<name> <drain> <gate> <source> <body> <model> W=<val> L=<val>
+XM1 vdd n1 0 0 sky130_fd_pr__nfet_01v8 w=5 l=2
+
+* Resistor and Voltage Sources
+R1  n1 in 55
+Vdd vdd 0 1.8
+Vin in  0 1.8
+
+*** Simulation Commands ***
+* DC sweep:
+* - Sweep Vdd (which is Vds for XM1) from 0V to 1.8V in 0.1V steps.
+* - For each Vdd step, step Vin (Vgs for XM1) from 0V to 1.8V in 0.2V steps.
+.dc Vdd 0 1.8 0.1 Vin 0 1.8 0.2
+
+.control
+  run
+  display
+.endc
+
+.end
+```
+
+\</details\>
+
+#### **3. Running the Simulation and Plotting Results**
+
+Execute the simulation using `ngspice` from your terminal.
+
+```bash
+# Navigate to the directory with the .spice file
+ngspice day1_nfet_idvds_L2_W5.spice
+```
+
+Inside the `ngspice` interactive shell, use the `plot` command to visualize the drain current. The current flowing from the `Vdd` source is equivalent to the transistor's drain current.
+
+```
+ngspice> plot -vdd#branch
+```
+
+#### **Expected Output**
+
+The simulation will produce the classic I-V characteristic curves for the NMOS transistor, showing its behavior across the linear and saturation regions for different gate voltages.
+
+
+
 ### **Introduction / Background**
 
 The goal of this project is to bridge the gap between the physical, analog behavior of transistors and the digital, abstract models used in Static Timing Analysis (STA). By simulating fundamental CMOS circuits using SPICE and the sky130 Process Design Kit (PDK), we can directly observe the physical phenomena that STA tools approximate.
