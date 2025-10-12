@@ -65,16 +65,24 @@ The NMOS transistor is the basic fundamentals of modern digital circuits. Unders
 
 (image of the NMOS with the initial conditions)
 
-#### **Regions of Operation**
+### **MOSFET Modes of Operation**
 
-The transistor's mode of operation is determined by its terminal voltages, primarily $V_{GS}$ (Gate-Source) and $V_{DS}$ (Drain-Source).
+A transistor's behavior is controlled by its terminal voltages. The gate-source voltage ($V_{GS}$) primarily determines whether a conductive channel exists, while the drain-source voltage ($V_{DS}$) influences how current flows through that channel.
 
-  * **Accumulation:** From the initial conditions the $V_{GS}$ increases and positive charge accumation occurs at the gate terminal. Due to the positive charges at the gate terminal, the positive charges from the p substrate near the oxide rejion are repelled leaving behind the negative charges.
-  * **Linear/Resistive Region ($V_{GS} > V_{t}$ and $V_{DS} < V_{GS} - V_{t}$):** A conductive channel is formed. The transistor acts like a voltage-controlled **resistor**. The drain current ($I_D$) is given by:
+The process of turning an NMOS transistor ON involves three phases controlled by the gate voltage:
+
+* **Accumulation ($V_{GS} < 0$):** A negative voltage on the gate attracts the abundant positive charge carriers (holes) in the p-type substrate to the silicon-oxide interface. No channel forms, and the transistor is firmly **OFF**.
+* **Depletion ($0 < V_{GS} < V_t$):** As $V_{GS}$ becomes slightly positive, it repels the mobile holes from the interface. This leaves behind a "depletion region" of fixed, negatively charged atoms. There is still no conductive channel, so the transistor remains **OFF**.
+* **Strong Inversion ($V_{GS} \ge V_t$):** When the gate voltage reaches the **threshold voltage ($V_t$)**, the electric field is strong enough to attract a large number of minority carriers (electrons) to the interface. These electrons form a continuous n-type "channel" connecting the source and drain, turning the transistor **ON**. 💡
+
+Once the transistor is ON ($V_{GS} > V_t$), its behavior is further defined by the drain voltage ($V_{DS}$):
+
+* **Linear/Resistive Region ($V_{DS} < V_{GS} - V_{t}$):** In this mode, a continuous channel exists, and the transistor acts like a **voltage-controlled resistor**. The drain current ($I_D$) increases as either $V_{GS}$ or $V_{DS}$ increases.
     $$I_D = \mu_n C_{ox} \frac{W}{L} \left( (V_{GS} - V_t)V_{DS} - \frac{V_{DS}^2}{2} \right)$$
-  * **Saturation Region ($V_{GS} > V_{t}$ and $V_{DS} \ge V_{GS} - V_{t}$):** The channel is "pinched off" near the drain. The transistor acts like a voltage-controlled **current source**, and the current becomes largely independent of $V_{DS}$.
+
+* **Saturation Region ($V_{DS} \ge V_{GS} - V_{t}$):** As $V_{DS}$ increases, the channel near the drain gets "pinched off." Beyond this point, the current flow becomes relatively independent of $V_{DS}$ and is mainly controlled by $V_{GS}$. The transistor now behaves like a **voltage-controlled current source**.
     $$I_D = \frac{1}{2} \mu_n C_{ox} \frac{W}{L} (V_{GS} - V_t)^2 (1 + \lambda V_{DS})$$
-    The term $(1 + \lambda V_{DS})$ accounts for **channel length modulation**.
+    The $(1 + \lambda V_{DS})$ term is a correction factor for **channel length modulation**, a secondary effect where a higher $V_{DS}$ slightly shortens the effective channel length, causing a minor increase in current.
 
 #### **The Body Effect**
 
