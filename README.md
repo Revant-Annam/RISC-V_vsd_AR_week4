@@ -23,7 +23,8 @@ The CMOS inverter is the most fundamental logic gate in digital electronics. Its
 
 #### **Circuit Structure and Analysis**
 
-(image of the inverter circuit)
+<img width="567" height="769" alt="circuit_inverter" src="https://github.com/user-attachments/assets/27fbd992-ac79-4cce-a6c0-bf21271749b6" />
+
 
 The inverter consists of a complementary pair of transistors: one PMOS and one NMOS.
 
@@ -41,7 +42,8 @@ The inverter consists of a complementary pair of transistors: one PMOS and one N
 
 **SPICE Simulations:**
 
-(image of plots of the drain and VTC curve)
+<img width="1191" height="733" alt="image" src="https://github.com/user-attachments/assets/0fb576de-859f-4126-a109-7cd0bf04dfb0" />
+
 
 1.  **Drain Characteristics - Top Graph:** It shows the relationship between the drain-source current (Ids) and the output voltage (Vout) for various input voltages (Vin).
 2.  **Voltage Transfer Characteristic (VTC) - Bottom Graph:** It shows how the output voltage (Vout) varies with the input voltage (Vin) to analyze the inverter's switching behavior and logic levels.
@@ -53,7 +55,8 @@ Static Timing Analysis (STA) tools rely on pre-characterized models of standard 
 1.  **Input Slew:** The transition time of the signal arriving at the cell's input pin.
 2.  **Output Load:** The total capacitance the cell's output must drive. The total capacitive load at a gate's output is the sum of all capacitances connected to that net.
 
-(image of the LUT and the buffer system)
+<img width="1920" height="1080" alt="Screenshot (357)" src="https://github.com/user-attachments/assets/fa27015d-385e-44c8-9e91-cc5a0fcc7873" />
+
 
 This data is stored in **2D Lookup Tables (LUTs)** within the cell's timing library (`.lib` file). STA tools use these tables to accurately determine delay.
 
@@ -63,7 +66,10 @@ To find the delay for a specific condition not listed in the table, the tool per
 
 The NMOS transistor is the basic fundamentals of modern digital circuits. Understanding its physical behavior is key to designing better circuits. Below is the basic circuit of the NMOS and the initial conditions we are assuming:
 
-(image of the NMOS with the initial conditions)
+<img width="1920" height="1080" alt="Screenshot (360)" src="https://github.com/user-attachments/assets/fbc14ec0-a3b7-4018-b9ba-ea99309abd9e" />
+
+<img width="1920" height="1080" alt="Screenshot (361)" src="https://github.com/user-attachments/assets/70458cf8-9248-400b-a416-7b9791258ddd" />
+
 
 ### **MOSFET Modes of Operation**
 
@@ -73,28 +79,78 @@ The process of turning an NMOS transistor ON involves three phases controlled by
 
 * **Accumulation ($V_{GS} < 0$):** A negative voltage on the gate attracts the abundant positive charge carriers (holes) in the p-type substrate to the silicon-oxide interface. No channel forms, and the transistor is firmly **OFF**.
 * **Depletion ($0 < V_{GS} < V_t$):** As $V_{GS}$ becomes slightly positive, it repels the mobile holes from the interface. This leaves behind a "depletion region" of fixed, negatively charged atoms. There is still no conductive channel, so the transistor remains **OFF**.
-* **Strong Inversion ($V_{GS} \ge V_t$):** When the gate voltage reaches the **threshold voltage ($V_t$)**, the electric field is strong enough to attract a large number of minority carriers (electrons) to the interface. These electrons form a continuous n-type "channel" connecting the source and drain, turning the transistor **ON**. 💡
 
-Once the transistor is ON ($V_{GS} > V_t$), its behavior is further defined by the drain voltage ($V_{DS}$):
+<img width="1920" height="1080" alt="Screenshot (364)" src="https://github.com/user-attachments/assets/3463cdcc-b8fb-4873-b83a-dcb6e84ed3fb" />
+
+* **Strong Inversion ($V_{GS} = V_t$):** When the gate voltage reaches the **threshold voltage ($V_t$)**, the electric field is strong enough to attract a large number of minority carriers (electrons) to the interface. These electrons form a continuous n-type "channel" connecting the source and drain, turning the transistor **ON**. 💡
+
+<img width="1920" height="1080" alt="Screenshot (367)" src="https://github.com/user-attachments/assets/b0724a23-bdfc-48a4-a797-2cc6043ef4a0" />
+
+
+<img width="1920" height="1080" alt="Screenshot (368)" src="https://github.com/user-attachments/assets/4abcc95a-67b8-4efa-bba7-286e3881fb1e" />
+
+
+All the above 3 phases comes under the cut off mode of operation. Once the transistor is ON ($V_{GS} > V_t$), its behavior is further defined by the drain voltage ($V_{DS}$):
 
 * **Linear/Resistive Region ($V_{DS} < V_{GS} - V_{t}$):** In this mode, a continuous channel exists, and the transistor acts like a **voltage-controlled resistor**. The drain current ($I_D$) increases as either $V_{GS}$ or $V_{DS}$ increases.
+  
     $$I_D = \mu_n C_{ox} \frac{W}{L} \left( (V_{GS} - V_t)V_{DS} - \frac{V_{DS}^2}{2} \right)$$
 
 * **Saturation Region ($V_{DS} \ge V_{GS} - V_{t}$):** As $V_{DS}$ increases, the channel near the drain gets "pinched off." Beyond this point, the current flow becomes relatively independent of $V_{DS}$ and is mainly controlled by $V_{GS}$. The transistor now behaves like a **voltage-controlled current source**.
+  
     $$I_D = \frac{1}{2} \mu_n C_{ox} \frac{W}{L} (V_{GS} - V_t)^2 (1 + \lambda V_{DS})$$
+  
     The $(1 + \lambda V_{DS})$ term is a correction factor for **channel length modulation**, a secondary effect where a higher $V_{DS}$ slightly shortens the effective channel length, causing a minor increase in current.
 
-#### **The Body Effect**
+### **The Body Effect**
 
-The threshold voltage ($V_t$) is not constant. It increases if a reverse bias exists between the source and the transistor's body (substrate), i.e., when $V_{SB} > 0$. This is known as the **body effect**.
+The **body effect** describes how the threshold voltage ($V_t$) of a MOSFET changes when there is a voltage difference between the source and the body (also called the substrate), denoted as $V_{SB}$. In a NMOS transistor, the body is usually connected to the most negative potential (ground), making its voltage the same as the source ($V_{SB} = 0$). However, in many circuits (like stacked transistors in a NAND gate), the source of a transistor can be at a higher voltage than the body.
 
-[Image illustrating the body effect on channel formation]
+When the source voltage is higher than the body voltage ($V_{SB} > 0$), a **reverse bias** is created across the source-body p-n junction. The reverse bias pushes the mobile positive charges (holes) in the p-type body further away from the gate. This widens the depletion region of fixed negative ions that the gate voltage must overcome before it can even start forming a channel. 
 
-The change in threshold voltage is modeled by:
+As we apply the gate voltage ($V_{GS}$) to create the inversion layer, the thicker depletion region requires higher voltage to start forming the channel near the source. This means the channel forms first at the drain end. To form a continuous channel all the way to the source, we need to apply an even higher gate voltage. This non-uniformity is why the threshold voltage increases.
+
+<img width="1920" height="1080" alt="Screenshot (371)" src="https://github.com/user-attachments/assets/023759a4-9df3-4797-a71e-908f72ea0c35" />
+
+
+<img width="1920" height="1080" alt="Screenshot (375)" src="https://github.com/user-attachments/assets/9927539c-3191-42e3-bd0d-fe071db5b282" />
+
+
+The change in threshold voltage is modeled by the following equation:
+
 $$V_t = V_{t0} + \gamma (\sqrt{|2\phi_f + V_{SB}|} - \sqrt{|2\phi_f|})$$
-Here, $\gamma$ and $\phi_f$ are process-dependent parameters provided by the foundry. The body effect is critical to model accurately, especially in stacked or complex logic gates.
 
------
+* **$V_t$ (Threshold Voltage):** This is the **threshold voltage** of the transistor when the body effect is present. 
+* **$V_{t0}$ (Zero-Bias Threshold Voltage):** This is the transistor's **intrinsic threshold voltage** when the source and body are at the same potential ($V_{SB} = 0$). 
+* **$\gamma$ (Body Effect Coefficient):** This is a **process-dependent constant** provided by the foundry. It depends on physical properties like the doping concentration of the substrate and the thickness of the gate oxide.
+* **$\phi_f$ (Fermi Potential):** This is another **material-dependent physical parameter**, also determined by the foundry. It relates to the difference between the Fermi energy level in the doped semiconductor and the intrinsic (undoped) semiconductor.
+* **$V_{SB}$ (Source-to-Body Voltage):** The voltage difference between the transistor's source terminal and its body terminal. When $V_{SB} = 0$, the entire second term of the equation becomes zero, and $V_t$ simply equals $V_{t0}$.
+
+#### **Fermi Potential ($\phi_f$)**
+
+The Fermi Potential is the potential difference between the intrinsic Fermi level and the Fermi level of the doped semiconductor. It indicates how strongly the substrate is doped.
+
+$$\phi_f = \phi_t * \ln\left(\frac{N_A}{n_i}\right)$$
+
+Where:
+* **$\phi_t$** is the **thermal voltage** which is approximately 26 mV at room temperature.
+* **$N_A$** is the **acceptor doping concentration** of the p-type substrate (atoms/cm³).
+* **$n_i$** is the **intrinsic carrier concentration** of silicon, which is a material constant.
+
+#### **Body Effect Coefficient ($\gamma$)**
+
+The Body Effect Coefficient quantifies how sensitive the transistor's threshold voltage is to a source-to-body voltage ($V_{SB}$).
+
+$$\gamma = \frac{\sqrt{2q\epsilon_{si}N_A}}{C_{ox}}$$
+
+Where:
+* **$q$** is the **elementary charge**.
+* **$\epsilon_{si}$** is the **permittivity of silicon**.
+* **$N_A$** is the **acceptor doping concentration** of the substrate.
+* **$C_{ox}$** is the **gate oxide capacitance per unit area**. This value itself is calculated as $C_{ox} = \frac{\epsilon_{ox}}{t_{ox}}$, where $\epsilon_{ox}$ is the permittivity of the silicon dioxide and $t_{ox}$ is the physical thickness of the gate oxide layer.
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/e473e161-f84e-4445-a8a6-4edcb12b63ba" />
+
 
 ### **5. Hands-On Lab: Simulating an NMOS Transistor with sky130**
 
