@@ -1,4 +1,4 @@
-# **Week 4 : CMOS Circuit Design & Analysis (sky130)**
+# **Week 4 Day 1: CMOS Circuit Design & Analysis (sky130)**
 
 ## 1. **CMOS Circuit Design and SPICE Simulations**
 
