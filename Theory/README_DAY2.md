@@ -2,13 +2,13 @@
 
 ## 📚 Contents
 
-  - [SPICE Simulation for Lower Nodes](spice-simulation-for-lower-nodes)
-      - [Observation 1: Long vs. Short Channel NMOS Characteristics](observation-1-long-vs-short-channel-nmos-characteristics)
-      - [Observation 2: Peak Current in Long vs. Short Channel Devices](observation-2-peak-current-in-long-vs-short-channel-devices)
-  - [Labs: Sky130 Id-Vgs](labs-sky130-id-vgs)
-  - [CMOS Voltage Transfer Characteristics](cmos-voltage-transfer-characteristics)
-  - [CMOS Inverter: Transistor and Switch-Level Views](cmos-inverter-transistor-and-switch-level-views)
-  - [Load Line Curves for NMOS and PMOS](load-line-curves-for-nmos-and-pmos)
+  - [SPICE Simulation for Lower Nodes](#spice-simulation-for-lower-nodes)
+      - [Observation 1: Long vs. Short Channel NMOS Characteristics](#observation-1-long-vs-short-channel-nmos-characteristics)
+      - [Observation 2: Peak Current in Long vs. Short Channel Devices](#observation-2-peak-current-in-long-vs-short-channel-devices)
+  - [Labs: Sky130 Id-Vgs](#labs-sky130-id-vgs)
+  - [CMOS Voltage Transfer Characteristics](#cmos-voltage-transfer-characteristics)
+  - [CMOS Inverter: Transistor and Switch-Level Views](#cmos-inverter-transistor-and-switch-level-views)
+  - [Load Line Curves for NMOS and PMOS](#load-line-curves-for-nmos-and-pmos)
 
 -----
 
@@ -48,19 +48,46 @@ This comparison clearly shows how **velocity saturation** in short-channel devic
 
 <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/4dadabf1-6341-4e29-95a5-5948f4783a68" />
 
+<img width="1203" height="607" alt="image" src="https://github.com/user-attachments/assets/97cd2a4d-04ba-4d71-a38d-2b3b2c9742ec" />
 
-At low electric fields, the velocity of charge carriers is proportional to the field strength. However, at high electric fields, this velocity plateaus and becomes constant due to saturation effects.
+
+The relationship between drift velocity ($v_d$) and the electric field ($E$) is typically described by a model that covers both low and high field conditions. A commonly used equation that combines both behaviors is:
+
+$$v_d = \frac{\mu E}{1 + \frac{E}{E_c}}$$
+
+**At Low Electric Field (Linear Region)**
+
+At low electric fields, the drift velocity is directly proportional to the electric field strength. The relationship is linear.
+
+$$v_d = \mu E$$
+
+* **$v_d$** is the **drift velocity** of the charge carriers (e.g., electrons).
+* **$\mu$** (mu) is the **carrier mobility**, a constant that measures how easily carriers can move through the material.
+* **$E$** is the magnitude of the **electric field**.
+
+**High Electric Field (Saturation Region)**
+
+At high electric fields, the velocity no longer increases and saturates at a maximum value, $v_{sat}$. This happens due to increased scattering.
+
+$$v_d = v_{sat}$$
+
+* **$v_{sat}$** is the **saturation velocity**, the maximum speed the carriers can achieve in the material.
+
+The general equation shown at the top smoothly transitions between these two regions. The term **$E_c$** is the critical electric field at which the velocity begins to saturate.
+
+The **velocity saturation** effect introduces an additional operating mode in short-channel devices.
 
   * **Long Channel (\> 250 nm) Modes:** Cutoff → Resistive → Saturation
   * **Short Channel (\< 250 nm) Modes:** Cutoff → Resistive → **Velocity Saturation** → Saturation
 
-The **velocity saturation** effect introduces an additional operating mode in short-channel devices.
 
------
+<img width="1300" height="719" alt="image" src="https://github.com/user-attachments/assets/f90e9c39-442e-4b78-baa9-b54428df40d8" />
 
 #### Observation 2: Peak Current in Long vs. Short Channel Devices
 
 The figure below compares the **peak drain current ($I_d$)** between long-channel and short-channel NMOS devices.
+
+<img width="1396" height="719" alt="image" src="https://github.com/user-attachments/assets/9c5a1a7f-40c6-43d7-b67e-f9131885f35c" />
 
   * **Left Plot (Long-channel):** W = 1.8μm, L = 1.2μm → Peak current = **410 μA**
   * **Right Plot (Short-channel):** W = 0.375μm, L = 0.25μm → Peak current = **210 μA**
