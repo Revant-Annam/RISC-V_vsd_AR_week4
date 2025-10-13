@@ -1,4 +1,4 @@
-# **Week 4 Day 1: CMOS Circuit Design & Analysis (sky130)**
+# **Week 4 Day  1 - Basics of NMOS Drain current (Id) vs Drain-to-source Voltage (Vds)**
 
 ## 1. **CMOS Circuit Design and SPICE Simulations**
 
