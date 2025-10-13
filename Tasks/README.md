@@ -131,22 +131,29 @@ This netlist sweeps $V_{gs}$ while keeping the transistor in saturation ($V_{ds}
 
 ```spice
 * Week4 Task 2: Vt Extraction
+*Model Description
+.param temp=27
 
-.lib "/path/to/vsd/libs/sky130_fd_pr/models/sky130.lib.spice" tt
+*Including sky130 library files
+.lib "sky130_fd_pr/models/sky130.lib.spice" tt
 
-* Power Supplies
-VDS D 0 1.8
-VGS G 0 0
+*Netlist Description
+XM1 Vdd n1 0 0 sky130_fd_pr__nfet_01v8 w=0.39 l=0.15
+R1 n1 in 55
+Vdd vdd 0 1.8V
+Vin in 0 1.8V
 
-* NMOS Transistor
-M1 D G 0 0 sky130_fd_pr__nfet_01v8 L=0.15u W=1u
+*simulation commands
+.op
+.dc Vdd 0 1.8 0.1 Vin 0 1.8 0.2
 
-* Simulation Commands
-.dc VGS 0 1.8 0.01
 .control
-    run
-    plot I(VDS)
+
+run
+display
+setplot dc1
 .endc
+
 .end
 ```
 
