@@ -62,6 +62,8 @@ This data is stored in **2D Lookup Tables (LUTs)** within the cell's timing libr
 
 To find the delay for a specific condition not listed in the table, the tool performs **interpolation** between the nearest characterized points. This allows for accurate delay calculation across a continuous range of operating conditions. For ensuring that the delay values are correct we need to do SPICE simulations. In the above example we can see that there is a CTS where each buffer has a different LUT.
 
+---
+
 ## **2. NMOS Transistor Fundamentals**
 
 The NMOS transistor is the basic fundamentals of modern digital circuits. Understanding its physical behavior is key to designing better circuits. Below is the basic circuit of the NMOS and the initial conditions we are assuming:
@@ -206,6 +208,7 @@ The derivation starts from the fundamental drift current equation and integrates
 It's common to group the terms that depend on the fabrication process and the transistor's dimensions into a single parameter. The term $\mu_n C_{ox} \frac{W}{L}$ is often represented as **$k_n$**, known as the **transconductance parameter**.
 
 So, the equation can be written more compactly as:
+
 $$I_D = k_n \left( (V_{GS} - V_t)V_{DS} - \frac{V_{DS}^2}{2} \right)$$
 
 The fundamental components that make up $k_n$—such as the electron mobility ($\mu_n$) and the gate oxide capacitance ($C_{ox}$)—are **technology parameters**. These values are defined by the foundry and are available in the **model files** that are used in SPICE simulations to accurately model the transistor's behavior. 
@@ -268,7 +271,9 @@ $$I_{D,sat} = \frac{1}{2} k_n (V_{GS} - V_t)^2 (1 + \lambda V_{DS})$$
 
 <img width="1207" height="668" alt="image" src="https://github.com/user-attachments/assets/29e11eae-2af9-415f-a504-c11186e48df1" />
 
-### **3. SPICE Introduction**
+---
+
+## **3. SPICE Introduction**
 
 SPICE (Simulation Program with Integrated Circuit Emphasis), developed at UC Berkeley, solves nonlinear equations for devices such as transistors, resistors, and capacitors.
 Modern SPICE tools include both free versions (Ngspice, LTSpice) and commercial tools (HSPICE, PSPICE). The inputs given to a spice are:
@@ -309,10 +314,13 @@ Nodes are the fundamental way SPICE understands a circuit's topology, or how its
 - The `.include` or `.LIB` command loads the **technology model file** into the simulation (`xxxx_025um_model.mod`).
 - The NMOS/PMOS **model names** (like `nmos`, `pmos`) used in the netlist must match those defined in the technology file.
 
-### **4. Labs using SPICE**
+---
+
+## **4. Labs with SPICE**
+
 This section outlines the practical steps to simulate the I-V characteristics of a sky130 NMOS transistor using `ngspice`.
 
-#### **1. Clone the Workshop Repository**
+### **Clone the Workshop Repository**
 
 First, obtain the necessary model files and example netlists.
 
@@ -320,11 +328,9 @@ First, obtain the necessary model files and example netlists.
 git clone https://github.com/kunalg123/sky130CircuitDesignWorkshop.git
 ```
 
-#### **2. SPICE Netlist Example**
+#### **SPICE Netlist Example**
 
-The following SPICE deck (`day1_nfet_idvds_L2_W5.spice`) is used to characterize an NMOS transistor.
-
-\<details\> \<summary\>\<strong\>Click to view `day1_nfet_idvds_L2_W5.spice`\</strong\>\</summary\>
+The following SPICE deck (`day1_nfet_idvds_L2_W5.spice`) is used to characterize an NMOS transistor. 
 
 ```spice
 * NMOS I-V Characterization for sky130 (W=5u, L=2u)
