@@ -102,7 +102,7 @@ All the above 3 phases comes under the cut off mode of operation. Once the trans
   
     The $(1 + \lambda V_{DS})$ term is a correction factor for **channel length modulation**, a secondary effect where a higher $V_{DS}$ slightly shortens the effective channel length, causing a minor increase in current.
 
-### **The Body Effect**
+#### **The Body Effect**
 
 The **body effect** describes how the threshold voltage ($V_t$) of a MOSFET changes when there is a voltage difference between the source and the body (also called the substrate), denoted as $V_{SB}$. In a NMOS transistor, the body is usually connected to the most negative potential (ground), making its voltage the same as the source ($V_{SB} = 0$). However, in many circuits (like stacked transistors in a NAND gate), the source of a transistor can be at a higher voltage than the body.
 
@@ -126,7 +126,7 @@ $$V_t = V_{t0} + \gamma (\sqrt{|2\phi_f + V_{SB}|} - \sqrt{|2\phi_f|})$$
 * **$\phi_f$ (Fermi Potential):** This is another **material-dependent physical parameter**, also determined by the foundry. It relates to the difference between the Fermi energy level in the doped semiconductor and the intrinsic (undoped) semiconductor.
 * **$V_{SB}$ (Source-to-Body Voltage):** The voltage difference between the transistor's source terminal and its body terminal. When $V_{SB} = 0$, the entire second term of the equation becomes zero, and $V_t$ simply equals $V_{t0}$.
 
-#### **Fermi Potential ($\phi_f$)**
+**Fermi Potential ($\phi_f$)**
 
 The Fermi Potential is the potential difference between the intrinsic Fermi level and the Fermi level of the doped semiconductor. It indicates how strongly the substrate is doped.
 
@@ -137,7 +137,7 @@ Where:
 * **$N_A$** is the **acceptor doping concentration** of the p-type substrate (atoms/cm³).
 * **$n_i$** is the **intrinsic carrier concentration** of silicon, which is a material constant.
 
-#### **Body Effect Coefficient ($\gamma$)**
+**Body Effect Coefficient ($\gamma$)**
 
 The Body Effect Coefficient quantifies how sensitive the transistor's threshold voltage is to a source-to-body voltage ($V_{SB}$).
 
@@ -151,9 +151,165 @@ Where:
 
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/e473e161-f84e-4445-a8a6-4edcb12b63ba" />
 
+### **NMOS Linear Mode of operation**
 
-### **5. Hands-On Lab: Simulating an NMOS Transistor with sky130**
+When an NMOS transistor has a gate voltage well above its threshold ($V_{GS} > V_t$) and the drain voltage is still relatively low ($V_{DS} < V_{GS} - V_t$), it operates in the **linear (or triode) region**. In this mode, a continuous, strong inversion channel exists from the source all the way to the drain, acting like a conductive path.
 
+The channel isn't uniform. The voltage along the channel, $V(x)$, gradually increases from $0V$ at the source to $V_{DS}$ at the drain. This voltage gradient creates a horizontal **electric field ($E$)** along the channel.
+
+This electric field is what drives the current. The free electrons in the n-type channel are pushed by this field, drifting from the source (lower potential) to the drain (higher potential). This movement of charge is called **drift current**. The strength of this current depends on how many charge carriers are available (controlled by $V_{GS}$) and how strong the electric field is (controlled by $V_{DS}$).
+
+<img width="1465" height="730" alt="image" src="https://github.com/user-attachments/assets/a595902f-cb15-4e63-b68b-496fe23ab8f0" />
+
+
+#### **Derivation of the Drain Current ($I_D$) Equation**
+
+<img width="1348" height="721" alt="image" src="https://github.com/user-attachments/assets/e8f4eee4-f8ac-41be-a4c1-5ed339886726" />
+
+
+The derivation starts from the fundamental drift current equation and integrates it along the length of the channel.
+
+1.  **Start with Drift Current:** The basic formula for drift current is:
+
+    $$I_D = -W \cdot Q_i(x) \cdot v(x)$$
+
+    * **$I_D$** is the drain current.
+    * **$W$** is the width of the channel.
+    * **$Q_i(x)$** is the charge density (charge per unit area) in the channel at a point $x$.
+    * **$v(x)$** is the drift velocity of the electrons at point $x$. The negative sign indicates electrons move opposite to the current flow.
+
+3.  **Define Charge and Velocity:**
+    * The **charge density** $Q_i(x)$ depends on the voltage difference between the gate and the channel at that point, $V_{GC}(x) = V_{GS} - V(x)$.
+
+      $$Q_i(x) = C_{ox} \cdot (V_{GS} - V(x) - V_t)$$
+    
+    * The **electron velocity** $v(x)$ is the product of electron mobility ($\mu_n$) and the electric field $E(x)$. The electric field is the rate of change of voltage with distance, $E(x) = -\frac{dV(x)}{dx}$.
+
+      $$v(x) = -\mu_n E(x) = \mu_n \frac{dV(x)}{dx}$$
+
+4.  Substituting the expressions for charge and velocity back into the current equation.
+
+    $$I_D = W \cdot \left[ C_{ox} (V_{GS} - V(x) - V_t) \right] \cdot \left( \mu_n \frac{dV(x)}{dx} \right)$$
+
+5.  To find the total current, we integrate this expression along the entire length of the channel, from $x=0$ (source) to $x=L$ (drain). We rearrange the equation to separate the variables.
+
+    $$I_D \cdot dx = W \mu_n C_{ox} (V_{GS} - V_t - V(x)) dV$$
+
+    Now, integrate both sides with the appropriate limits:
+
+    $$\int_{0}^{L} I_D \cdot dx = \int_{0}^{V_{DS}} W \mu_n C_{ox} (V_{GS} - V_t - V(x)) dV$$
+
+    $$I_D \cdot L = W \mu_n C_{ox} \left( (V_{GS} - V_t)V_{DS} - \frac{V_{DS}^2}{2} \right)$$
+
+    $$I_D = \mu_n C_{ox} \frac{W}{L} \left( (V_{GS} - V_t)V_{DS} - \frac{V_{DS}^2}{2} \right)$$
+
+It's common to group the terms that depend on the fabrication process and the transistor's dimensions into a single parameter. The term $\mu_n C_{ox} \frac{W}{L}$ is often represented as **$k_n$**, known as the **transconductance parameter**.
+
+So, the equation can be written more compactly as:
+$$I_D = k_n \left( (V_{GS} - V_t)V_{DS} - \frac{V_{DS}^2}{2} \right)$$
+
+The fundamental components that make up $k_n$—such as the electron mobility ($\mu_n$) and the gate oxide capacitance ($C_{ox}$)—are **technology parameters**. These values are defined by the foundry and are available in the **model files** that are used in SPICE simulations to accurately model the transistor's behavior. 
+
+<img width="1202" height="685" alt="image" src="https://github.com/user-attachments/assets/077dd293-94b8-470d-850c-67c8dec281f2" />
+
+
+When the drain-source voltage ($V_{DS}$) is very small, the $V_{DS}^2$ term in the equation becomes negligible compared to the term linear in $V_{DS}$.
+
+$$V_{DS}^2 \approx 0 \quad (\text{for small } V_{DS})$$
+
+Applying this approximation simplifies the equation significantly:
+
+$$I_D \approx k_n (V_{GS} - V_t) V_{DS}$$
+
+<img width="1207" height="700" alt="image" src="https://github.com/user-attachments/assets/b80ed0bc-6c80-4d09-8087-2da98d29207b" />
+
+
+### **Saturation Mode**
+
+A transistor enters the saturation region when the drain-source voltage ($V_{DS}$) is greater than or equal to the overdrive voltage ($V_{GS} - V_t$).
+
+$$V_{DS} \ge V_{GS} - V_t$$
+
+#### **Pinch-Off Condition**
+
+**Pinch-off** is the beginning of saturation. As $V_{DS}$ increases, the voltage difference between the gate and the channel at the drain end decreases. When this difference, $V_{GD}$ (Gate-to-Drain voltage), drops to the threshold voltage ($V_t$), the channel at the drain end disappears or "pinches off."
+
+At this point, the current no longer increases significantly with $V_{DS}$ and is said to be saturated. The transistor now acts like a current source controlled by $V_{GS}$. 💡
+
+<img width="1210" height="625" alt="image" src="https://github.com/user-attachments/assets/70a2e5e5-2fb0-4e6b-9ce5-200789100b98" />
+
+The saturation current equation is derived by substituting the boundary condition ($V_{DS} = V_{GS} - V_t$) into the linear region equation.
+
+$$I_D = k_n \left( (V_{GS} - V_t)V_{DS} - \frac{V_{DS}^2}{2} \right)$$
+
+**Substitute $V_{DS} = V_{GS} - V_t$:**
+    
+  $$I_{D,sat} = k_n \left( (V_{GS} - V_t)(V_{GS} - V_t) - \frac{(V_{GS} - V_t)^2}{2} \right)$$
+
+  $$I_{D,sat} = k_n \left( (V_{GS} - V_t)^2 - \frac{(V_{GS} - V_t)^2}{2} \right)$$
+  
+  This results in the ideal saturation current equation:
+    
+  $$I_{D,sat} = \frac{1}{2} k_n (V_{GS} - V_t)^2$$
+
+This equation shows that in the ideal case, the current is only dependent on the gate voltage and is independent of the drain voltage. This can act as a constant current source.
+
+<img width="1212" height="636" alt="image" src="https://github.com/user-attachments/assets/a051e4aa-2b64-4c98-8d67-8ee38ea528c9" />
+
+#### **Equation with Channel Length Modulation**
+
+In reality, increasing $V_{DS}$ beyond the pinch-off point causes the pinch-off region to extend slightly towards the source, effectively shortening the conductive channel length. This phenomenon is called **channel length modulation**. A shorter channel leads to a slight increase in current.
+
+To account for this, a correction factor is added to the ideal equation:
+
+$$I_{D,sat} = \frac{1}{2} k_n (V_{GS} - V_t)^2 (1 + \lambda V_{DS})$$
+
+* **$\lambda$ (Lambda)** is the **channel length modulation parameter**. It's a technology-dependent constant (with units of $1/V$) provided in the SPICE model files. A smaller value of $\lambda$ indicates a more ideal transistor with a flatter saturation current.
+
+<img width="1207" height="668" alt="image" src="https://github.com/user-attachments/assets/29e11eae-2af9-415f-a504-c11186e48df1" />
+
+### **3. SPICE Introduction**
+
+SPICE (Simulation Program with Integrated Circuit Emphasis), developed at UC Berkeley, solves nonlinear equations for devices such as transistors, resistors, and capacitors.
+Modern SPICE tools include both free versions (Ngspice, LTSpice) and commercial tools (HSPICE, PSPICE). The inputs given to a spice are:
+
+* **Netlist:** A description of all components (transistors, resistors, etc.) and how they are connected.
+* **Device Models:** This is the crucial link to the real world. A **technology file** (loaded with `.LIB` or `.include`) provides the physical and electrical parameters from the foundry (like $V_t$, mobility, etc.) that define how a transistor actually behaves.
+* **Stimulus:** The input signals, such as DC voltages or time-varying pulses, applied to the circuit.
+* **Analysis Commands:** Instructions telling SPICE what kind of simulation to perform. The most common types are:
+    * **`.DC`:** Find the circuit's DC operating point or sweep a DC voltage.
+    * **`.AC`:** Analyze the circuit's response to different frequencies.
+    * **`.TRAN`:** Analyze the circuit's behavior over time (transient response).
+
+If we give these inputs to the SPICE engine it will result is graphs explaining the functioning of the netlist. 
+
+<img width="1208" height="676" alt="image" src="https://github.com/user-attachments/assets/622f938f-3dec-4de9-b5f0-371c06e2ccae" />
+
+In SPICE, a node is a point in a circuit where two or more components connect. Every connection point that has a distinct voltage must be assigned a unique name or number.
+
+Nodes are the fundamental way SPICE understands a circuit's topology, or how its components are wired together.
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/21e9afd4-5d82-4a60-9e67-537f5d4b619c" />
+
+<p align = "center"> Nodes </p>
+
+**SPICE Netlist Example**:  
+
+| Line in Netlist | Explanation |
+| --------------- | ----------- |
+| `M1 vdd n1 0 0 nmos W=1.8u L=1.2u` | Defines NMOS transistor `M1`. Node order: **Drain (vdd), Gate (n1), Source (0), Bulk (0)** — sequence **D G S B**. Model name `nmos` comes from technology file. `W` = gate width (1.8µm), `L` = gate length (1.2µm). |
+| `R1 in n1 55` | Series resistor `R1` of 55 ohms between input node `in` and gate node `n1`. |
+| `Vdd vdd 0 2.5` | Voltage source `Vdd` applying 2.5V between `vdd` and ground. |
+| `Vin in 0 2.5` | Voltage source `Vin` applying 2.5V between input node `in` and ground. |
+
+<img width="1216" height="644" alt="image" src="https://github.com/user-attachments/assets/9cb0ac11-802c-4daa-952c-d29144d9888c" />
+
+<img width="1205" height="790" alt="image" src="https://github.com/user-attachments/assets/0646b0a8-0ffc-422c-ba3c-59554e896847" />
+
+- The `.include` or `.LIB` command loads the **technology model file** into the simulation (`xxxx_025um_model.mod`).
+- The NMOS/PMOS **model names** (like `nmos`, `pmos`) used in the netlist must match those defined in the technology file.
+
+### **4. Labs using SPICE**
 This section outlines the practical steps to simulate the I-V characteristics of a sky130 NMOS transistor using `ngspice`.
 
 #### **1. Clone the Workshop Repository**
