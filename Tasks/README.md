@@ -52,7 +52,7 @@ setplot dc1
 
 ### Plots & Figures
 
-#### Graph: $I_d$ vs $V_{ds}$ for NMOS (W/L = 1u/0.15u)
+**Graph: $I_d$ vs $V_{ds}$ for NMOS (W/L = 5u/2u)**
 
 <img width="1920" height="1080" alt="Screenshot from 2025-10-13 16-22-09" src="https://github.com/user-attachments/assets/a604fc38-d800-41ab-ae3c-4048bb019cf9" />
 <p align="center"> $I_d$ v/s $V_{ds}$ all three modes</p>
@@ -89,18 +89,18 @@ The table below is the drain currents to the voltage sweep $V_{gs}$.
 
 ### Analysis
 
-**What is seen:** The plot clearly shows that the drain current $I_d$ is strongly dependent on the gate voltage $V_{gs}$. Increasing $V_{gs}$ results in a significantly higher saturation current. 
+- **What is seen:** The plot clearly shows that the drain current $I_d$ is strongly dependent on the gate voltage $V_{gs}$. Increasing $V_{gs}$ results in a significantly higher saturation current. 
 The transition from the linear to the saturation region, known as the saturation voltage ($V_{ds,sat}$), occurs at higher values of $V_{ds}$ for higher $V_{gs}$ values. 
 Another important observation is that the curves in the saturation region are not perfectly flat; they exhibit a slight positive slope.
 
-**Why it happens (Device Physics):** The gate voltage $V_{gs}$ controls the formation of the inversion layer (the channel) under the gate.
+- **Why it happens (Device Physics):** The gate voltage $V_{gs}$ controls the formation of the inversion layer (the channel) under the gate.
 A higher $V_{gs}$ attracts more free electrons, creating a more conductive channel and thus allowing more current to flow. 
 Saturation begins when $V_{ds} \geq V_{gs} - V_{th}$, at which point the channel near the drain is "pinched off." 
 The slight upward slope in the saturation region is due to **Channel Length Modulation (CLM)**. 
 As $V_{ds}$ increases past the saturation point, the pinch-off region widens, slightly reducing the effective channel length ($L_{eff}$). 
 Since drain current is inversely proportional to channel length, this results in a small increase in $I_d$.
 
-**How this ties back to STA concepts:** Static Timing Analysis (STA) tools rely on models that abstract this physical behavior. 
+- **How this ties back to STA concepts:** Static Timing Analysis (STA) tools rely on models that abstract this physical behavior. 
 The **saturation current ($I_{dsat}$)** is the single most important parameter for determining the switching speed of a logic gate. 
 The ability of a transistor to provide high $I_{dsat}$ allows it to charge or discharge a capacitive load quickly, resulting in a lower propagation delay. 
 The I-V curves from this experiment are used to build the timing libraries (e.g., Non-Linear Delay Models - NLDM) that STA tools use to accurately predict circuit timing.
@@ -113,7 +113,7 @@ This transistor-level characteristic directly constrains circuit-level performan
 Understanding this relationship is the first and most critical step in designing high-performance digital circuits and performing accurate timing analysis. 
 Any variations in this I-V behavior due to process, voltage, or temperature (PVT) will directly impact timing margins and the reliability of a digital system.
 
-## References / Citations
+## References
 
   * SKY130 Process Design Kit (PDK) for the `sky130_fd_pr__nfet_01v8` transistor model.
 
