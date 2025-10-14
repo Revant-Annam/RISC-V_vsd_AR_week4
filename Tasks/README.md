@@ -105,7 +105,7 @@ The **saturation current ($I_{dsat}$)** is the single most important parameter f
 The ability of a transistor to provide high $I_{dsat}$ allows it to charge or discharge a capacitive load quickly, resulting in a lower propagation delay. 
 The I-V curves from this experiment are used to build the timing libraries (e.g., Non-Linear Delay Models - NLDM) that STA tools use to accurately predict circuit timing.
 
-## Conclusions
+### Conclusions
 
 This experiment successfully characterized the fundamental I-V behavior of a sky130 NMOS transistor. 
 The results visually confirm the device's transition from a resistor-like (linear) to a current-source-like (saturation) behavior based on the applied terminal voltages. 
@@ -113,69 +113,146 @@ This transistor-level characteristic directly constrains circuit-level performan
 Understanding this relationship is the first and most critical step in designing high-performance digital circuits and performing accurate timing analysis. 
 Any variations in this I-V behavior due to process, voltage, or temperature (PVT) will directly impact timing margins and the reliability of a digital system.
 
-## References
+### References
 
   * SKY130 Process Design Kit (PDK) for the `sky130_fd_pr__nfet_01v8` transistor model.
 
 -----
 
-### **2. Threshold Voltage Extraction & Velocity Saturation**
+Of course. Here is your work documented in the requested report format, based on the experiments you described.
 
-#### **Purpose**
+-----
 
-The threshold voltage ($V_t$) is the minimum gate voltage required to create a conducting channel between the source and drain. This experiment extracts $V_t$ by sweeping $V_{gs}$ and measuring $I_d$. We also observe the effects of velocity saturation, where current in modern, short-channel transistors increases more linearly with $V_{gs}$ than the ideal square-law model predicts.
+## 2. Threshold Voltage Extraction & Velocity Saturation 
 
-#### **SPICE Netlist**
+### Introduction
 
-This netlist sweeps $V_{gs}$ while keeping the transistor in saturation ($V_{ds} = 1.8V$).
+The purpose of these experiments is to characterize the fundamental electrical behavior of a short-channel NMOS transistor from the sky130 Process Design Kit (PDK). This characterization is crucial for understanding how modern, scaled-down transistors differ from ideal long-channel devices. Two primary analyses were performed:
+
+1.  **$I_d$ vs. $V_{ds}$ (Output Characteristics)**: This experiment aims to visualize the transistor's operational regions and observe the impact of **velocity saturation** on its current-driving capability.
+2.  **$I_d$ vs. $V_{gs}$ (Transfer Characteristics)**: This experiment is done to extract the transistor's **threshold voltage ($V_t$)**, a critical parameter that tells its turn-on point, using a method suitable for velocity-saturated devices.
+
+### SPICE Netlists
+
+#### Netlist 1: $I_d$ vs. $V_{ds}$ Simulation (for Velocity Saturation Analysis)
+
+This netlist performs a nested DC sweep to generate multiple output curves.
 
 ```spice
-* Week4 Task 2: Vt Extraction
-*Model Description
-.param temp=27
+* NMOS Output Characteristics (Id vs. Vds)
 
-*Including sky130 library files
 .lib "sky130_fd_pr/models/sky130.lib.spice" tt
 
-*Netlist Description
-XM1 Vdd n1 0 0 sky130_fd_pr__nfet_01v8 w=0.39 l=0.15
-R1 n1 in 55
-Vdd vdd 0 1.8V
-Vin in 0 1.8V
+* Device Under Test (W/L = 0.39u/0.15u)
+XM1 vdd_node gate_node 0 0 sky130_fd_pr__nfet_01v8 w=0.39u l=0.15u
 
-*simulation commands
-.op
-.dc Vdd 0 1.8 0.1 Vin 0 1.8 0.2
+* Voltage Sources
+Vds vdd_node 0 0
+Vgs gate_node 0 0
 
-.control
-
-run
-display
-setplot dc1
-.endc
+* Nested DC Sweep Analysis
+.dc Vds 0 1.8 0.01 Vgs 0 1.8 0.2
 
 .end
 ```
 
-#### **Plot & Figure**
+#### Netlist 2: $I_d$ vs. $V_{gs}$ Simulation (for $V_t$ Extraction)
 
-Plot $I_d$ vs. $V_{gs}$. To extract $V_t$ using linear extrapolation, find the tangent to the curve at the point of maximum slope and identify its x-intercept.
+This netlist sweeps the gate voltage while keeping the drain voltage fixed to ensure the transistor is in saturation.
 
-#### **Tabulated Results**
+```spice
+* NMOS Transfer Characteristics (Id vs. Vgs) for Vth Extraction
 
-| Parameter | Extracted Value |
-| :--- | :--- |
-| Threshold Voltage ($V_t$) | \~0.45 V |
+.lib "sky130_fd_pr/models/sky130.lib.spice" tt
 
-#### **Observations & Analysis**
+* Device Under Test (W/L = 0.39u/0.15u)
+XM1 vdd_node gate_node 0 0 sky130_fd_pr__nfet_01v8 w=0.39u l=0.15u
 
-  * **Observation:** The current remains near zero until $V_{gs}$ approaches $V_t$, after which it rises sharply. In a short-channel device, the slope of the $I_d$ vs. $V_{gs}$ curve begins to decrease at high $V_{gs}$, which is a sign of **velocity saturation**.
-  * **Device Physics:** Velocity saturation occurs when charge carriers reach their maximum possible drift velocity in the silicon channel, limiting further increases in current. This effect is significant in sub-micron transistors.
-  * **Relevance to STA:** $V_t$ is a cornerstone parameter in the delay models found in `.lib` files. Variations in $V_t$ due to manufacturing (process variation) are a major reason why STA must be performed across different process corners (e.g., fast, slow, typical).
+* Voltage Sources
+Vdd vdd_node 0 1.8V
+Vin gate_node 0 0
+
+* DC Sweep Analysis
+.dc Vin 0 1.8 0.01
+
+.end
+```
+
+### Plots & Figures
+
+#### Graph 1: NMOS Output Characteristics ($I_d$ vs. $V_{ds}$) (W/L=0.39/0.15)
+
+The plot shows drain current ($I_d$) versus drain-to-source voltage ($V_{ds}$). Each curve corresponds to a different gate voltage ($V_{gs}$). 
+
+#### Graph 2: NMOS Transfer Characteristics ($I_d$ vs. $V_{gs}$)
+
+This plot shows drain current ($I_d$) versus gate-to-source voltage ($V_{gs}$). The tangent line is extrapolated from the linear portion of the curve. Its intersection with the x-axis provides the **threshold voltage ($V_t$)**.
+
+### Tabulated Results
+
+The primary parameter extracted from these experiments is the transistor's threshold voltage for a short channel NMOS. This method is only possible for the short-channel device as the long channel device will have quadratic relation ($I_d$ vs. $V_{gs}$). The **threshold voltage ($V_t$)** for the NMOS transistor was extracted using the **Linear Extrapolation Method**. This technique was applied to the $I_d$ vs. $V_{gs}$ characteristic curve by programmatically finding the slope of the curve in its linear region and extrapolating to the x-axis. The entire process was done using the following sequence of `meas` commands. 
+
+First, the drain current at $V_{gs}=1.2V$ was found using:
+
+```ngspice
+meas dc id1 find vdd#branch when v(in)=1.2
+```
+
+Next, the current at $V_{gs}=1.5V$ was found with:
+
+```ngspice
+meas dc id2 find vdd#branch when v(in)=1.5
+```
+
+Finally, these two measured values were used to automatically calculate the slope (transconductance, $g_m$) between the points:
+
+```ngspice
+meas dc gm_slope param='(id2-id1)/(1.5-1.2)'
+```
+
+The resulting slope value was then used in the point-slope line equation to calculate the x-intercept, yielding the final threshold voltage. 
+
+| Parameter | Extracted Value | Method |
+| :--- | :--- | :--- |
+| **Threshold Voltage ($V_t$)** | **\~0.804 V** | Linear extrapolation from the $I_d$ vs. $V_{gs}$ curve. |
+
+### Observations / Analysis
+
+  * **What you see**:
+
+    1.  From the **Graph 1**, we see the current saturates as expected. However, for a short-channel device, the current is lower than expected this is due to the velocity saturation. Also we can observe from the graph is that as the $V_{gs}$ increases the increase in $I_d$ is linear.
+    2.  From the $I_d$ vs. $V_{gs}$ plot, we observe that after the transistor turns on, the drain current increases **linearly** with the gate voltage, rather than quadratically.
+
+  * **Why it happens (Device Physics)**:
+    Both of these observations are direct consequences of **velocity saturation**. In short-channel transistors, the high electric field ($E \approx V_{ds} / L$) causes electrons to reach a maximum drift velocity ($v_{sat}$). This physical speed limit prevents the current from increasing as rapidly as it would in a long-channel device. This effect changes the fundamental device equations. The equation for the drain current ($I_d$) when the device is in the velocity saturation region is:
+
+    $$I_d = \mu_n C_{ox} \frac{W}{L} \left[ (V_{gs} - V_t) V_{dsat} - \frac{V_{dsat}^2}{2} \right] (1 + \lambda V_{ds})$$
+
+    * **$I_d$**: The **Drain Current** flowing through the transistor.
+    * **$\mu_n$**: The **mobility of electrons** in the channel.
+    * **$C_{ox}$**: The **gate oxide capacitance** per unit area.
+    * **$W/L$**: The **Width-to-Length ratio** of the transistor, a key design parameter.
+    * **$(V_{gs} - V_t)$**: The **gate overdrive voltage**, often abbreviated as $V_{gt}$. It's the effective voltage that controls the channel.
+    * **$V_{dsat}$**: The specific drain-to-source voltage at which the charge carriers (electrons) reach their maximum speed (saturation velocity). This is a critical parameter in short-channel models.
+    * **$\lambda$**: The **Channel Length Modulation** parameter. This accounts for the slight increase in drain current with $V_{ds}$ even after the transistor has saturated.
+    * **$V_{ds}$**: The **drain-to-source voltage**.
+      
+    This linear relationship is precisely what we observe in the $I_d$ vs. $V_{gs}$ plot and is why the **linear extrapolation method** is the standard technique for extracting $V_t$ in modern devices. We are fitting a line to a behavior that is inherently linear due to this physical effect.
+
+  * **How this ties back to STA**:
+    **Velocity saturation** is a critical first-order effect that must be included in the timing models used by Static Timing Analysis (STA) tools. If a tool were to use a simple square-law model for a short-channel device, it would overestimate the drive current and incorrectly predict a much smaller gate delay. An accurate $V_t$ value is essential for calculating the gate overdrive ($V_{gs} - V_t$), which determines the saturation current and, consequently, the propagation delay of the logic cell.
+
+### Conclusions
+
+This characterization demonstrates how the physical behavior of modern, short-channel transistors directly impacts circuit performance. The phenomenon of **velocity saturation** fundamentally limits the current-driving capability and changes the device's response to gate voltage from quadratic to linear. This understanding is critical for accurately extracting parameters like the **threshold voltage ($V_t$)** and deriving a delay model for a particular cell.
+
+### References / Citations
+
+  * SKY130 Process Design Kit (PDK) model files for the `sky130_fd_pr__nfet_01v8` transistor model.
 
 -----
 
-### **3. CMOS Inverter: Voltage Transfer Characteristic (VTC)**
+## **3. CMOS Inverter: Voltage Transfer Characteristic (VTC)**
 
 #### **Purpose**
 
