@@ -24,9 +24,9 @@ The plot below illustrates the output characteristics of an NMOS device with dim
 
 Essentially, the device operates in the **Linear Region** before the pinch-off point ($V_{ds} = V_{gs} - V_t$) and enters the **Saturation Region** after this point.
 
------
+--- 
 
-#### Observation 1: Long vs. Short Channel NMOS Characteristics
+### Observation 1: Long vs. Short Channel NMOS Characteristics
 
 The following plot contrasts the output characteristics of a long-channel and a short-channel NMOS device, both having the **same W/L ratio**.
 
@@ -83,7 +83,7 @@ The **velocity saturation** effect introduces an additional operating mode in sh
 
 <img width="1300" height="719" alt="image" src="https://github.com/user-attachments/assets/f90e9c39-442e-4b78-baa9-b54428df40d8" />
 
-#### Observation 2: Peak Current in Long vs. Short Channel Devices
+### Observation 2: Peak Current in Long vs. Short Channel Devices
 
 The figure below compares the **peak drain current ($I_d$)** between long-channel and short-channel NMOS devices.
 
@@ -98,87 +98,7 @@ This reduction in current is a direct consequence of **velocity saturation**, wh
 
 -----
 
-### `Labs Sky130 Id-Vgs`
-
-\<details\> \<summary\>\<strong\>day2\_nfet\_idvds\_L015\_W039.spice\</strong\>\</summary\>
-
-```spice
-* Model Description
-.param temp=27
-
-* Including sky130 library files
-.lib "sky130_fd_pr/models/sky130.lib.spice" tt
-
-* Netlist Description
-XM1 Vdd n1 0 0 sky130_fd_pr__nfet_01v8 w=0.39 l=0.15
-R1 n1 in 55
-Vdd vdd 0 1.8V
-Vin in 0 1.8V
-
-* Simulation commands
-.op
-.dc Vdd 0 1.8 0.1 Vin 0 1.8 0.2
-
-.control
-run
-display
-setplot dc1
-.endc
-.end
-```
-
-\</details\>
-
-📈 **Plotting the waveforms in ngspice:**
-
-```shell
-ngspice day2_nfet_idvds_L015_W039.spice
-plot -vdd#branch
-```
-
-**Plot of $I_{ds}$ vs. $V_{ds}$ for constant $V_{gs}$ values:**
-
-\<details\> \<summary\>\<strong\>day2\_nfet\_idvgs\_L015\_W039.spice\</strong\>\</summary\>
-
-```spice
-* Model Description
-.param temp=27
-
-* Including sky130 library files
-.lib "sky130_fd_pr/models/sky130.lib.spice" tt
-
-* Netlist Description
-XM1 Vdd n1 0 0 sky130_fd_pr__nfet_01v8 w=0.39 l=0.15
-R1 n1 in 55
-Vdd vdd 0 1.8V
-Vin in 0 1.8V
-
-* Simulation commands
-.op
-.dc Vin 0 1.8 0.1 
-
-.control
-run
-display
-setplot dc1
-.endc
-.end
-```
-
-\</details\>
-
-📈 **Plotting the waveforms in ngspice:**
-
-```shell
-ngspice day2_nfet_idvgs_L015_W039.spice
-plot -vdd#branch
-```
-
-**Plot of $I_{ds}$ vs. $V_{gs}$ for a constant $V_{ds}$:**
-
------
-
-### `CMOS Voltage Transfer Characteristics`
+## `CMOS Voltage Transfer Characteristics`
 
 **The MOSFET as a Switching Element:**
 
@@ -187,11 +107,15 @@ A MOSFET can be simplified as a voltage-controlled switch.
   * **OFF State:** When the gate-source voltage is below the threshold voltage ($|V_{gs}| < |V_{th}|$), the MOSFET acts as an **open switch** with nearly infinite resistance.
   * **ON State:** When the gate-source voltage exceeds the threshold voltage ($|V_{gs}| > |V_{th}|$), the MOSFET acts as a **closed switch** with a finite ON resistance.
 
------
+<img width="1173" height="703" alt="image" src="https://github.com/user-attachments/assets/b0f302ea-82d1-4524-a1ef-d5d83a5e764f" />
+
 
 ### `CMOS Inverter: Transistor and Switch-Level Views`
 
 The diagram below presents the **CMOS inverter** from two perspectives: a **transistor-level** schematic and a simplified **switch-level** model.
+
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/0ec93129-5a05-4f40-af44-eb9e4452e95f" />
+
 
 The **left schematic** shows the standard transistor-level inverter. A PMOS transistor connects to the high voltage supply ($V_{dd}$), an NMOS transistor connects to the ground ($V_{ss}$), and the input ($V_{in}$) drives both gates. The output ($V_{out}$) is tapped from the shared drain connection, driving a load capacitance ($C_L$).
 
@@ -199,24 +123,33 @@ The **middle diagram** shows the switch model for a high input ($V_{in} = V_{dd}
 
 The **right diagram** shows the model for a low input ($V_{in} = 0$). The PMOS is ON (a resistor, $R_p$) and the NMOS is OFF (an open circuit), pulling $V_{out}$ to $V_{dd}$.
 
-> If **$V_{in} = V_{dd}$**, then **$V_{out} = 0$** (NMOS conducts, PMOS is off).
+* If **$V_{in} = V_{dd}$**, then **$V_{out} = 0$** (NMOS conducts, PMOS is off).
 
-> If **$V_{in} = 0$**, then **$V_{out} = V_{dd}$** (PMOS conducts, NMOS is off).
+* If **$V_{in} = 0$**, then **$V_{out} = V_{dd}$** (PMOS conducts, NMOS is off).
 
 This fundamental operation ensures that one transistor is always off in steady state, leading to the **low static power consumption** and **sharp switching characteristics** that define CMOS logic.
 
------
+---
 
 ### `Load Line Curves for NMOS and PMOS`
 
-> **Step 1**
+**Step 1**
 
-First, express the PMOS gate-source voltage ($V_{gsP}$) in terms of the input voltage, $V_{in}$. All internal node voltages should be rewritten using only $V_{in}$, $V_{out}$, $V_{dd}$, and $V_{ss}$.
+First, express the PMOS gate-source voltage ($V_{gsP}$) in terms of the input voltage, $V_{in}$. All internal node voltages should be rewritten using only $V_{in}$, $V_{out}$, $V_{dd}$, and $V_{ss}$. This is done to easily understand the inverter characteristics.
 
-> **Steps 2 & 3**
+<img width="1493" height="721" alt="image" src="https://github.com/user-attachments/assets/9629ce34-c32b-40ed-8f31-381da29643f0" />
 
-Next, express both the PMOS and NMOS drain-source voltages ($V_{dsP}$ and $V_{dsN}$) as functions of the output voltage, $V_{out}$.
+**Steps 2 & 3**
 
-> **Step 4**
+Next, express both the PMOS and NMOS drain-source voltages ($V_{dsP}$ and $V_{dsN}$) as functions of the output voltage, $V_{out}$. From the $I_{dsN}$ v/s. $V_{out}$ graph we get the load curves of PMOS and NMOS.
 
-Finally, combine the NMOS and PMOS load curves by equating their drain current ($I_{ds}$) equations. By sweeping $V_{in}$ and finding the corresponding intersection point, you can plot the **Voltage Transfer Characteristic (VTC)**. This VTC graph illustrates the inverter's switching behavior as the input transitions from high to low.
+<img width="1204" height="655" alt="image" src="https://github.com/user-attachments/assets/abbbaa23-4100-4135-a24c-93e656a6c11d" />
+
+<img width="1207" height="399" alt="image" src="https://github.com/user-attachments/assets/fae6399f-f302-47b7-806e-c334051ff918" />
+
+
+**Step 4**
+
+Finally, combine the NMOS and PMOS load curves by equating their drain current ($I_{ds}$) equations. By sweeping $V_{in}$ and finding the corresponding intersection point, we can plot the **Voltage Transfer Characteristic (VTC)**. This VTC graph illustrates the inverter's switching behavior as the input transitions from high to low. From this graph we can also understand the region of operation for a analog circuits and the region of operation for a digital circuit. 
+
+<img width="1214" height="677" alt="image" src="https://github.com/user-attachments/assets/c2fe7523-4f7b-496e-a526-242a97ac047b" />
