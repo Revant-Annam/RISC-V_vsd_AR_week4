@@ -12,7 +12,7 @@
 
 -----
 
-## `SPICE simulation for lower nodes`
+## SPICE simulation for lower nodes
 
 The plot below illustrates the output characteristics of an NMOS device with dimensions W=1.8μm and L=1.2μm, giving a W/L ratio of 1.5.
 
@@ -98,7 +98,7 @@ This reduction in current is a direct consequence of **velocity saturation**, wh
 
 -----
 
-## `CMOS Voltage Transfer Characteristics`
+## CMOS Voltage Transfer Characteristics
 
 **The MOSFET as a Switching Element:**
 
@@ -110,7 +110,7 @@ A MOSFET can be simplified as a voltage-controlled switch.
 <img width="1173" height="703" alt="image" src="https://github.com/user-attachments/assets/b0f302ea-82d1-4524-a1ef-d5d83a5e764f" />
 
 
-### `CMOS Inverter: Transistor and Switch-Level Views`
+### CMOS Inverter: Transistor and Switch-Level Views
 
 The diagram below presents the **CMOS inverter** from two perspectives: a **transistor-level** schematic and a simplified **switch-level** model.
 
@@ -131,7 +131,7 @@ This fundamental operation ensures that one transistor is always off in steady s
 
 ---
 
-### `Load Line Curves for NMOS and PMOS`
+### Load Line Curves for NMOS and PMOS
 
 **Step 1**
 
