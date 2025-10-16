@@ -1,14 +1,35 @@
-# CMOS Inverter Analysis: Theory, Simulation, and Sizing
+# CMOS Switching threshold and dynamic simulations
 
 This document provides an overview of the CMOS inverter, covering its static and dynamic behavior. We will explore the theoretical concepts behind the Voltage Transfer Characteristic (VTC), the critical role of the **switching threshold ($V_M$)**, the impact of **velocity saturation** in modern devices, and conclude with practical SPICE simulations using the Sky130 PDK.
 
 -----
 
-### 🔬 1. Static Behavior: The Voltage Transfer Characteristic (VTC)
+## 1. The Voltage Transfer Characteristic (VTC)
 
 The **Voltage Transfer Characteristic (VTC)** is a fundamental plot that defines the static behavior of an inverter. It shows the steady-state output voltage ($V_{out}$) for every possible input voltage ($V_{in}$), revealing the inverter's switching sharpness, noise margins, and overall robustness.
 
-To generate a VTC in SPICE, we perform a **DC sweep** (`.dc` command), which slowly varies the input voltage from $0$ to $V_{DD}$ and records the output.
+### CMOS Inverter SPICE Deck
+
+<img width="1297" height="612" alt="image" src="https://github.com/user-attachments/assets/abb1c12b-ae03-46c1-b423-63d232c35cdf" />
+
+A SPICE deck is a text file that describes a circuit for simulation. A SPICE Deck contains four essential parts:
+
+- Component Connectivity: Define how PMOS (M1), NMOS (M2), power supply (Vdd), ground (Vss), input (Vin), and output (Vout) are connected.
+- Component Values: Specify transistor dimensions (W/L), supply voltages (e.g., 2.5V), and load capacitance (Cload = 10fF).
+- Identify Nodes: Recognize each node in the circuit — such as in, out, vdd, vss, and transistor terminals.
+- Name Nodes: Assign clear names to all nodes for ease of reference during simulation and result interpretation.
+
+**CMOS Inverter SPICE Deck Explained:**
+
+* `M1 out in vdd vdd pmos W=0.375u L=0.25u`: This line defines the **PMOS transistor**, named `M1`. It's connected between the `out` node and the `vdd` node, with its gate connected to `in`. It has a specified width (W) and length (L).
+* `M2 out in 0 0 nmos W=0.375u L=0.25u`: This defines the **NMOS transistor**, `M2`. It's connected between the `out` node and ground (`0`), with its gate also connected to `in`.
+* `cload out 0 10f`: This creates a **capacitor**, `cload`, with a value of 10 femtofarads (10fF). It's connected between the `out` node and ground, representing the load the inverter has to drive.
+* `Vdd vdd 0 2.5`: This defines the **power supply**, named `Vdd`. It creates a 2.5 Volt DC source between the `vdd` node and ground (`0`).
+* `Vin in 0 2.5`: This defines the **input voltage source**, `Vin`, connected between the `in` node and ground. The initial value is 2.5V, but this source will be varied by the `.dc` command.
+* `.op`: This command tells SPICE to perform an **Operating Point** analysis, calculating the circuit's DC voltages and currents in its initial state.
+* `.dc Vin 0 2.5 0.05`: This command initiates a **DC Sweep**. It instructs the simulator to vary the `Vin` source from **0V** to **2.5V** in steps of **0.05V**, calculating the circuit's behavior at each point. This is used to generate the VTC curve.
+* `.include tsmc_025um_model.mod` / `.LIB "tsmc_025um_model.mod" CMOS_MODELS`: Both commands link the simulation to a **model file**. This file contains the detailed electrical parameters (like threshold voltage) for the `pmos` and `nmos` transistors based on a specific manufacturing process (TSMC 0.25µm). Without this, the simulator wouldn't know how the transistors behave.
+* `.end`: This command marks the **end of the SPICE deck**. The simulator ignores anything written after this line.
 
 -----
 
