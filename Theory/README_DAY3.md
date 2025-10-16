@@ -1,10 +1,6 @@
-Of course\! Based on the updated information you provided, here is a revised and consolidated document. It integrates the theory, the concept of velocity saturation, and the practical lab examples into a cohesive guide.
+# CMOS Inverter Analysis: Theory, Simulation, and Sizing
 
------
-
-## CMOS Inverter Analysis: Theory, Simulation, and Sizing
-
-This guide provides a comprehensive overview of the CMOS inverter, covering its static and dynamic behavior. We will explore the theoretical concepts behind the Voltage Transfer Characteristic (VTC), the critical role of the **switching threshold ($V_M$)**, the impact of **velocity saturation** in modern devices, and conclude with practical SPICE simulations using the Sky130 PDK.
+This document provides an overview of the CMOS inverter, covering its static and dynamic behavior. We will explore the theoretical concepts behind the Voltage Transfer Characteristic (VTC), the critical role of the **switching threshold ($V_M$)**, the impact of **velocity saturation** in modern devices, and conclude with practical SPICE simulations using the Sky130 PDK.
 
 -----
 
@@ -56,60 +52,3 @@ Transient analysis reveals how an inverter behaves over time, which is essential
 
 In clock distribution networks, it is crucial to have **balanced rise and fall delays**. If an inverter or buffer is improperly sized (e.g., a weak PMOS), its rise time will be much slower than its fall time. This leads to **duty cycle distortion**, where a 50% duty cycle clock signal becomes skewed, potentially causing timing violations in a digital system. Symmetric inverter design is the first line of defense against this issue.
 
------
-
-### 💻 5. Lab Example: Simulation with Sky130 PDK
-
-Here are practical SPICE netlists for simulating a CMOS inverter using the open-source Sky130 Process Design Kit.
-
-#### VTC (DC Sweep) Simulation
-
-This netlist performs a DC sweep on `Vin` to generate the VTC curve.
-
-```spice
-* Sky130 Inverter for VTC Analysis
-.lib "sky130_fd_pr/models/sky130.lib.spice" tt
-.param temp=27
-
-* --- Netlist ---
-XM1 out in vdd vdd sky130_fd_pr__pfet_01v8 w=0.84 l=0.15
-XM2 out in 0 0   sky130_fd_pr__nfet_01v8 w=0.36 l=0.15
-Cload out 0 50fF
-Vdd   vdd 0 1.8V
-Vin   in  0 1.8V
-
-* --- Simulation Command ---
-.dc Vin 0 1.8 0.01
-
-.control
-run
-plot v(out) vs v(in)
-.endc
-.end
-```
-
-#### Transient Analysis
-
-This netlist simulates the inverter's response to an input pulse to measure timing.
-
-```spice
-* Sky130 Inverter for Transient Analysis
-.lib "sky130_fd_pr/models/sky130.lib.spice" tt
-.param temp=27
-
-* --- Netlist ---
-XM1 out in vdd vdd sky130_fd_pr__pfet_01v8 w=0.84 l=0.15
-XM2 out in 0 0   sky130_fd_pr__nfet_01v8 w=0.36 l=0.15
-Cload out 0 50fF
-Vdd   vdd 0 1.8V
-Vin   in  0 PULSE(0V 1.8V 0 0.1ns 0.1ns 2ns 4ns)
-
-* --- Simulation Command ---
-.tran 1n 10n
-
-.control
-run
-plot v(out) v(in)
-.endc
-.end
-```
