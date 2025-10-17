@@ -4,7 +4,7 @@ This document provides an overview of the CMOS inverter, covering its static and
 
 -----
 
-## 1. The Voltage Transfer Characteristic (VTC)
+## The Voltage Transfer Characteristic (VTC)
 
 The **Voltage Transfer Characteristic (VTC)** is a fundamental plot that defines the static behavior of an inverter. It shows the steady-state output voltage ($V_{out}$) for every possible input voltage ($V_{in}$), revealing the inverter's switching sharpness, noise margins, and overall robustness.
 
@@ -33,43 +33,66 @@ A SPICE deck is a text file that describes a circuit for simulation. A SPICE Dec
 
 -----
 
-### 💡 2. The Switching Threshold ($V_M$)
+## Static behavior evaluation — CMOS inverter robustness — Switching threshold voltage
 
-The **Switching Threshold ($V_M$)** is the most critical parameter of the VTC. It represents the exact center of the inverter's switching activity.
+The characteristics that define the CMOS inverter robustness are:
+- Switching Threshold Voltage (Vm)
+- Noise Margin
+- Power Supply Variation
+- Device Variations
 
-  * **Definition**: $V_M$ is the input voltage ($V_{in}$) where the output voltage is precisely equal to the input voltage ($V_{out} = V_{in}$).
+### Switching Threshold Voltage of CMOS Inverter (Vm):
 
-  * **Physical State**: At this unique point, both the PMOS and NMOS transistors are simultaneously active in the **saturation region**. This leads to a crucial consequence: the magnitude of the current flowing through the PMOS transistor becomes equal to the current flowing through the NMOS transistor.
-    $$|I_{ds,p}| = I_{ds,n} \quad (\text{at } V_{in} = V_{out} = V_M)$$
-    This current balance is the underlying condition that defines the switching threshold.
+The **Switching Threshold Voltage**, denoted as **$V_m$**, is defined as the specific input voltage ($V_{in}$) where it is identical to the output voltage ($V_{out}$). This parameter is critical because it directly influences the inverter's noise margin and overall robustness.
 
-#### The Role of Transistor Sizing
+At the point where $V_{in} = V_{out} = V_m$, both the NMOS and PMOS transistors are simultaneously active and operating in their **saturation regions**. This state results in the highest voltage gain for the inverter.
 
-The value of $V_M$ is determined by the relative electrical strengths of the PMOS and NMOS transistors, which is controlled by their **Width-to-Length ($W/L$) ratios**. To create a symmetric inverter with $V_M \approx V_{DD}/2$, the PMOS transistor must be made physically wider than the NMOS to compensate for the lower mobility of holes compared to electrons ($\mu_n > \mu_p$).
+The provided image illustrates a comparison between two CMOS inverters that have different sizing ratios for their PMOS and NMOS transistors:
 
-  * **Increasing PMOS Width ($W_p$)**: Shifts $V_M$ higher (towards $V_{DD}$).
-  * **Increasing NMOS Width ($W_n$)**: Shifts $V_M$ lower (towards Ground).
+<img width="1476" height="705" alt="image" src="https://github.com/user-attachments/assets/5f301680-4a57-4d81-a812-be9b7ef0fc1a" />
 
------
 
-### ⚡️ 3. Advanced Topic: Velocity Saturation
+* **Left Graph:** Here, the PMOS and NMOS transistors have identical dimensions (W = 0.375 μm, L = 0.25 μm), leading to equal aspect ratios of $(W/L)_n = (W/L)_p = 1.5$. This configuration yields a switching threshold of approximately **$V_m \approx 0.98$ V**.
+* **Right Graph:** In this case, the PMOS is wider than the NMOS (Wp = 0.9375 μm vs. Wn = 0.375 μm), resulting in different aspect ratios: $(W/L)_p = 3.75$ and $(W/L)_n = 1.5$. This sizing results in a higher switching threshold of about **$V_m \approx 1.2$ V**.
 
-In modern, **short-channel transistors**, the classic square-law I-V model is inaccurate. At high electric fields (common in small devices), the velocity of charge carriers (electrons and holes) no longer increases with the field strength and instead saturates at a maximum velocity ($v_{sat}$).
+### Regions of operation:
 
-  * **Impact**: This **velocity saturation** changes the transistor's current equation, making it more linear with respect to the gate voltage.
-  * **Effect on $V_M$**: The formula for calculating $V_M$ is modified. However, the fundamental principle remains the same: $V_M$ is set by the ratio `r` of the PMOS to NMOS drive strengths. To achieve a symmetric inverter ($V_M \approx V_{DD}/2$), we still need to balance the transistors by adjusting their widths, aiming for `r` ≈ 1.
+The inverter's voltage transfer curve is divided into distinct sections, each corresponding to different operating states for the transistors:
 
------
+1.  PMOS in Linear / NMOS in Cutoff (OFF)
+2.  PMOS in Linear / NMOS in Saturation
+3.  **PMOS in Saturation / NMOS in Saturation** (The region where the switching threshold, **$V_m$**, occurs.)
+4.  PMOS in Saturation / NMOS in Linear
+5.  PMOS in Cutoff (OFF) / NMOS in Linear
 
-### ⏱️ 4. Dynamic Behavior: Transient Analysis
+<img width="1395" height="715" alt="image" src="https://github.com/user-attachments/assets/13167cbd-7074-48c4-9142-155f8acb84a5" />
 
-Transient analysis reveals how an inverter behaves over time, which is essential for determining its speed.
 
-  * **Purpose**: To measure key timing metrics like **propagation delay**, **rise time**, and **fall time**.
-  * **SPICE Command**: The `.tran` command is used, with a time-varying input like a `PULSE` voltage source.
-  * **Propagation Delay ($t_p$)**: The time it takes for the output to respond to an input change, typically measured between the 50% transition points of the input and output waveforms.
+### Current balance at Vm:
 
-#### Application in Clock Networks
+At the switching threshold ($V_m$), a state of current equilibrium is reached where the condition **$I_{dsp} = -I_{dsn}$** holds true. This means the magnitude of the current flowing through the PMOS transistor is equal to the current flowing through the NMOS transistor.
 
-In clock distribution networks, it is crucial to have **balanced rise and fall delays**. If an inverter or buffer is improperly sized (e.g., a weak PMOS), its rise time will be much slower than its fall time. This leads to **duty cycle distortion**, where a 50% duty cycle clock signal becomes skewed, potentially causing timing violations in a digital system. Symmetric inverter design is the first line of defense against this issue.
+When evaluating this at $V_m$, the gate-source voltage for the NMOS is $V_{gs} = V_m$, while for the PMOS it is $V_{gs} = V_m - V_{dd}$.
 
+<img width="1461" height="718" alt="image" src="https://github.com/user-attachments/assets/ef2876ec-f284-49de-9dbe-a2f0a303cc32" />
+
+
+By setting the sum of the currents to zero ($I_{dsp} + I_{dsn} = 0$) and solving the resulting equation, one can derive an expression for $V_m$ that depends on the transistor sizing ratios and mobility parameters. This relationship allows designers to calculate the necessary aspect ratio between the PMOS and NMOS transistors, $(W_p/L_p) / (W_n/L_n)$, to achieve a desired switching threshold ($V_m$) by ensuring the currents are balanced precisely at that point.
+
+<img width="884" height="310" alt="image" src="https://github.com/user-attachments/assets/65311500-ec8c-4af3-a644-0101629b848c" />
+
+
+The accompanying table demonstrates the impact of adjusting the **$W_p/W_n$ ratio** on three key performance metrics:
+
+<img width="1403" height="719" alt="image" src="https://github.com/user-attachments/assets/32d1fb69-72dc-40de-9e5b-6bdc3f6fac12" />
+
+
+* ✅ **Rise Delay**
+* ✅ **Fall Delay**
+* ✅ **Switching Threshold Voltage ($V_m$)**
+
+It is observed that when the PMOS aspect ratio is approximately double the NMOS aspect ratio ($W_p/L_p \approx 2 \times W_n/L_n$), the inverter exhibits **symmetrical rise and fall delays**, each around 80 ps. This balanced condition corresponds to a switching threshold of **$V_m \approx 1.2$ V**.
+
+When the rise and fall delays of a clock buffer are closely matched, there is no need to correct for **duty cycle distortion**. However, if an imbalance exists, typically due to a mismatch in the ON-resistance ($R_{on}$) of the PMOS and NMOS transistors, specialized **duty cycle correction** circuits are implemented within the clock distribution network (clock tree) to restore the signal to a perfect 50% duty cycle.
+
+<img width="1289" height="708" alt="image" src="https://github.com/user-attachments/assets/a7bf1927-1ce2-44a5-8dfc-c25caa9f816e" />
