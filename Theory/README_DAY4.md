@@ -1,38 +1,27 @@
-### Static Behavior Evaluation: CMOS Inverter Robustness and Noise Margin
+# CMOS Noise Margin robustness evaluation
 
-#### 📚 Contents
-
-* Introduction to noise margin
-* Noise Margin Definition — VTC and Undefined Region
-* Noise Margin Summary — Handling Input "Bumps"
-* Sky130 Noise margin labs
-
-***
-
-### Introduction to noise margin
+## Introduction to Noise Margin
 
 **Noise margin** is a measure of how much noise a CMOS circuit can withstand before its logic state is corrupted.
 
-
+<img width="949" height="559" alt="image" src="https://github.com/user-attachments/assets/9efdd871-681d-4133-bd62-1317bb8f76ee" />
 
 This image contrasts two types of inverter characteristics:
 * An **ideal inverter** (left) switches instantaneously at half the supply voltage ($V_{dd}/2$), featuring an infinitely steep slope.
-* A **real-world inverter** (right) exhibits a gradual transition, with a finite slope in its switching region.
+* A **real inverter** (right) exhibits a gradual transition, with a finite slope in its switching region.
 
 ***
 
-### Noise Margin Definition — VTC and Undefined Region
+## Noise Margin Definition — VTC and Undefined Region
 
 This diagram explains how the **Noise Margin** is determined using the inverter's **Voltage Transfer Characteristic (VTC)** curve.
 
+<img width="982" height="582" alt="image" src="https://github.com/user-attachments/assets/08ff0d49-1aed-4b3c-837c-b848b53acef5" />
 
-
-* **Left Plot**: The points where the VTC's slope equals **-1** define two key thresholds:
+* The points where the VTC's slope equals **-1** define key thresholds:
     * $V_{IL}$: The maximum input voltage that is reliably interpreted as a logic low.
     * $V_{IH}$: The minimum input voltage that is reliably interpreted as a logic high.
-* **Right Diagram**: This shows the valid output voltage levels and the input thresholds.
     * $V_{OH}$ & $V_{OL}$: Represent the guaranteed output high and low voltage levels.
-    * $V_{IL}$ & $V_{IH}$: Mark the input voltage thresholds where the gain is -1.
 * **Noise Margins**:
     * **Noise Margin High ($N_M H$)**: $N_M H = V_{OH} - V_{IH}$. This is the circuit's tolerance to noise when the input is a logic '1'.
     * **Noise Margin Low ($N_M L$)**: $N_M L = V_{IL} - V_{OL}$. This is the circuit's tolerance to noise when the input is a logic '0'.
