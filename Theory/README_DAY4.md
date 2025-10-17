@@ -10,7 +10,7 @@ This image contrasts two types of inverter characteristics:
 * An **ideal inverter** (left) switches instantaneously at half the supply voltage ($V_{dd}/2$), featuring an infinitely steep slope.
 * A **real inverter** (right) exhibits a gradual transition, with a finite slope in its switching region.
 
-***
+---
 
 ## Noise Margin Definition — VTC and Undefined Region
 
@@ -30,25 +30,54 @@ This diagram explains how the **Noise Margin** is determined using the inverter'
     * If input noise pushes the voltage into this zone, the output becomes unpredictable.
     * A key design goal is to **maximize both $N_M H$ and $N_M L$** to make the circuit more robust against noise.
 
-In essence, noise margins quantify a gate's ability to tolerate voltage fluctuations on its input signals, which is critical for ensuring dependable operation in noisy digital systems.
+### Conditions for Proper Operation
 
-***
+For a logic gate to function correctly, the output voltage from one gate must be correctly interpreted by the input of the next. This requires two conditions to be met:
 
-### Noise Margin Summary — Handling Input "Bumps"
+* The highest voltage that a gate will output for a logic '0' ($V_{OL_{MAX}}$) must be lower than the highest voltage the next gate will accept as a logic '0' ($V_{IL_{MAX}}$).
+* The lowest voltage a gate will output for a logic '1' ($V_{OH_{MIN}}$) must be higher than the lowest voltage the next gate requires to see a logic '1' ($V_{IH_{MIN}}$).
 
-This illustration shows how a circuit's **Noise Margins** allow it to correctly interpret logic levels despite the presence of noise, often visualized as "bumps" on the signal.
+### Behavior in Different Input Ranges
 
-[Image showing noise bumps on digital signals]
+The inverter's behavior changes dramatically depending on the input voltage ($V_{in}$) level, making it suitable for different applications in each range. 
 
-* **Input Thresholds**:
-    * An input voltage below $V_{IL}$ (e.g., < 10% of $V_{dd}$) is recognized as a **logic '0'**.
-    * An input voltage above $V_{IH}$ (e.g., > 90% of $V_{dd}$) is recognized as a **logic '1'**.
-* **Output Thresholds**:
-    * An output voltage near 0V ($V_{OL}$) acts as a valid **logic '0'** for the next gate.
-    * An output voltage near $V_{dd}$ ($V_{OH}$) acts as a valid **logic '1'** for the next gate.
-* **Noise Scenarios**:
-    * **Case (a)**: A noise bump on a low signal that remains between $V_{OL}$ and $V_{IL}$ is safely ignored, and the signal is correctly read as **logic '0'**.
-    * **Case (b)**: A bump that pushes the voltage into the **undefined region** (between $V_{IL}$ and $V_{IH}$) causes the output to become unstable or indeterminate.
-    * **Case (c)**: A noise-induced dip on a high signal that remains between $V_{IH}$ and $V_{OH}$ is tolerated, and the signal is still correctly read as **logic '1'**.
+* **For $V_{in} \le V_{IL}$:**
+    In this region, the magnitude of the inverter's gain is less than one. This means the circuit actually suppresses noise, ensuring a stable and predictable output. Due to this stability and low gain, the circuit operates reliably as a digital logic element.
 
-For reliable logic operation, a signal must remain within its respective noise margin ($N_M L$ for logic '0', $N_M H$ for logic '1') and stay clear of the undefined region.
+* **For $V_{in} \ge V_{IH}$:**
+    Similarly, the gain magnitude here is also less than one, providing the same noise-dampening effect for a stable output. This predictable behavior is essential for its function in digital circuits.
+
+* **For $V_{IL} < V_{in} < V_{IH}$:**
+    Within this range, known as the undefined region, the gain magnitude is greater than one. Here, the inverter becomes a high-gain amplifier, meaning that small input changes are magnified at the output. While this makes the output unstable for digital logic, this high-gain characteristic is useful for analog circuit applications, such as in amplifiers or comparators.
+  
+### Noise Margin Equations
+
+The noise margins are calculated to quantify the voltage buffer a circuit has against noise.
+
+* **Low-Level Noise Margin ($N_{ML}$):**
+    This margin represents the maximum noise voltage that can be added to a logic '0' signal without causing a logic error.
+    $$N_{ML} = V_{IL_{MAX}} - V_{OL_{MAX}}$$
+
+* **High-Level Noise Margin ($N_{MH}$):**
+    This margin represents the maximum noise voltage that can be subtracted from a logic '1' signal before it is no longer recognized as high.
+    $$N_{MH} = V_{OH_{MIN}} - V_{IH_{MIN}}$$
+
+* **Overall Noise Margin (NM):**
+    The overall noise immunity of the circuit is determined by the smaller of the two margins, as this represents the worst-case vulnerability to noise.
+    $$NM = \min(N_{ML}, N_{MH})$$
+
+<img width="1163" height="554" alt="image" src="https://github.com/user-attachments/assets/771ea0d5-7917-47e0-85e6-171b17e9d516" />
+
+<img width="1215" height="681" alt="image" src="https://github.com/user-attachments/assets/510cf78e-2ab4-4543-be18-1e17b030daaf" />
+
+<img width="1215" height="688" alt="image" src="https://github.com/user-attachments/assets/d5d254a3-242c-4350-83d7-a7739371e975" />
+
+### Impact of Transistor Sizing on Noise Margin
+
+The table from the analysis demonstrates how changing the relative sizes of the PMOS and NMOS transistors impacts the inverter's noise margins.
+
+<img width="1204" height="675" alt="image" src="https://github.com/user-attachments/assets/910df819-4d98-47a6-93bc-1c8fe74b067c" />
+
+* **Noise Margin High ($N_{MH}$):** As the width of the PMOS transistor increases relative to the constant-sized NMOS (from `Wn/Ln` to `5Wn/Ln`), the **$N_{MH}$** steadily improves (from 0.3 to 0.42). This is because the PMOS transistor acts as the **pull-up device**. A wider, stronger PMOS can pull the output voltage to the high supply rail more effectively, which directly contributes to a better high noise margin.
+
+* **Noise Margin Low ($N_{ML}$):** In contrast, the **$N_{ML}$** remains nearly the same, showing only a slight decrease (from 0.3 to 0.27). This is expected because the low noise margin is determined by the **pull-down device**, which is the NMOS transistor. Since the dimensions of the NMOS are not being changed, its performance in pulling the output to ground is unaffected, resulting in a relatively constant $N_{ML}$.
