@@ -517,82 +517,126 @@ This analysis successfully quantified the inverter's noise margins, a critical m
     
 -----
 
-### **6. Power-Supply and Device Variation Studies**
+## **6. Power-Supply and Device Variation Studies**
 
-#### **Purpose**
+### Introduction / Background
 
-This experiment shows how circuit performance changes with variations in operating conditions (supply voltage) and manufacturing (transistor sizing). This directly corresponds to the **PVT corners** that are essential for robust STA.
+The purpose of this experiment is to study the robustness of a CMOS inverter by analyzing its response to common real-world variations. In any practical integrated circuit, performance is affected by fluctuations in the operating environment and inconsistencies in manufacturing. This analysis focuses on two key aspects:
 
-#### **SPICE Netlist (Example for VDD variation)**
+1.  **Power-Supply Variation**: The supply voltage ($V_{DD}$) across a chip is not perfectly constant due to effects like IR drop and power grid noise. We will analyze the inverter's Voltage Transfer Characteristic (VTC) at a significantly lower supply voltage to see how its functionality and gain are affected.
 
-Use the `.step` command to simulate the VTC across multiple $V_{dd}$ values.
+2.  **Device Variation**: Manufacturing processes are not perfect, leading to variations in transistor dimensions. We will analyze how changing the width of the PMOS transistor (Process Variation) affects the inverter's switching threshold ($V_M$) and its overall symmetry.
+
+These studies are critical for understanding how a simple logic gate maintains its functionality under non-ideal conditions, a property known as robustness.
+
+### SPICE Netlists / Code
+
+#### Netlist 1: Power-Supply Variation Analysis
+
+This netlist uses the `.step` command to simulate the inverter's VTC at two different supply voltages: the nominal 1.8V and a reduced 0.8V.
 
 ```spice
-* Week4 Task 6: Vdd Variation Study
+* CMOS Inverter VTC - Supply Variation
 
-.lib "/path/to/vsd/libs/sky130_fd_pr/models/sky130.lib.spice" tt
+.lib "sky130_fd_pr/models/sky130.lib.spice" tt
 
-* Power Supplies
-VDD vdd 0 VDD_val
-VIN vin 0 0
+.subckt inverter vin vout vdd gnd
+    MP1 vout vin vdd vdd sky130_fd_pr__pfet_01v8 w=0.78u l=0.15u
+    MN1 vout vin gnd gnd sky130_fd_pr__nfet_01v8 w=0.39u l=0.15u
+.ends inverter
 
-* Parameters
-.param VDD_val=1.8
+* Power Supply - its value is stepped
+Vdd vdd 0 1.8V
 
-* Inverter
-MP1 vout vin vdd vdd sky130_fd_pr__pfet_01v8 L=0.15u W=3u
-MN1 vout vin 0 0 sky130_fd_pr__nfet_01v8 L=0.15u W=1u
+* Input Voltage Source for the sweep
+Vin vin 0 0
 
-* Simulation Commands
-.dc VIN 0 1.8 0.01
-.step param VDD_val list 1.6 1.8 2.0
-.control
-    run
-    plot v(vout)
-.endc
+* Instantiate the inverter subcircuit
+X1 vin vout vdd 0 inverter
+
+* DC Sweep Analysis of the input voltage
+.dc Vin 0 1.8 0.01
+
+* Use .step to run the entire .dc sweep for different Vdd values
+.step Vdd LIST 1.8 0.8
+
 .end
 ```
 
-#### **Plots & Figures**
+#### Netlist 2: Device Variation Analysis
 
-Produce two sets of plots:
+This netlist uses the `.param` and `.step` commands to simulate the VTC for several different PMOS widths, demonstrating the effect of process variation on the switching threshold.
 
-1.  **Overlaid VTCs:** Show the VTC at different $V_{dd}$ values (e.g., 1.6V, 1.8V, 2.0V).
-2.  **Overlaid Transient Waveforms:** Show the transient response with different PMOS widths (e.g., W=2u, 3u, 4u) to see the effect on rise time.
+```spice
+* CMOS Inverter VTC - Device Variation (PMOS Width)
 
-#### **Tabulated Results (Example)**
+.lib "sky130_fd_pr/models/sky130.lib.spice" tt
 
-| Variation | $V_m$ | $t_{plh}$ | $t_{phl}$ | Observation |
-| :--- | :--- | :--- | :--- | :--- |
-| **$V_{dd}$ = 1.6V** | \~0.8 V | Slower | Slower | Lower voltage reduces drive current |
-| **$V_{dd}$ = 1.8V** | \~0.9 V | Nominal | Nominal | Baseline performance |
-| **$V_{dd}$ = 2.0V** | \~1.0 V | Faster | Faster | Higher voltage increases drive current |
-| **Wp = 2u** | \> 0.9 V | Slower | Faster | Weaker PMOS, stronger NMOS |
-| **Wp = 4u** | \< 0.9 V | Faster | Slower | Stronger PMOS, weaker NMOS |
+.param WP=0.78u ; Default PMOS width
 
-#### **Observations & Analysis**
+.subckt inverter vin vout vdd gnd
+    * PMOS width is now a parameter
+    MP1 vout vin vdd vdd sky130_fd_pr__pfet_01v8 w=WP l=0.15u
+    MN1 vout vin gnd gnd sky130_fd_pr__nfet_01v8 w=0.39u l=0.15u
+.ends inverter
 
-  * **Observation:** Lowering $V_{dd}$ significantly increases gate delay and shifts the switching threshold. Changing the PMOS/NMOS width ratio (skewing the inverter) makes one edge (rise or fall) faster at the expense of the other and shifts $V_m$.
-  * **Relevance to STA:** This is **exactly** what STA corners model.
-      * **Voltage Variation:** Simulating at low $V_{dd}$ corresponds to a "slow" timing corner because gates are slower.
-      * **Process Variation:** Changing W/L models manufacturing variations. A "slow" corner might model transistors with higher-than-normal $V_t$ and lower-than-normal drive strength. STA must ensure that timing constraints (setup) are met even in the slowest corner and that no race conditions (hold) occur in the fastest corner.
+Vdd vdd 0 1.8V
+Vin vin 0 0
+X1 vin vout vdd 0 inverter
 
------
+.dc Vin 0 1.8 0.01
 
-### **Conclusions**
+* Use .step to run the VTC analysis for different PMOS widths
+.step param WP LIST 0.5u 0.78u 1.2u
 
-This series of SPICE simulations has effectively demonstrated the physical underpinnings of digital circuit performance. We have seen how:
+.end
+```
 
-1.  Transistor **I-V characteristics** and **threshold voltage** directly control the drive strength and switching speed of logic gates.
-2.  The inverter's **VTC** and **noise margins** define its static robustness, while its **transient response** defines its speed.
-3.  **Variations** in supply voltage and device dimensions have a first-order impact on delay and switching characteristics.
+### Plots & Figures
 
-These experiments make it clear that the numbers in a standard cell library (`.lib` file) are not arbitrary. They are carefully characterized abstractions of these complex underlying analog behaviors. A deep understanding of how transistor-level effects influence delay and robustness is crucial for interpreting STA reports and designing reliable, high-performance digital systems.
+#### Graph 1: VTC under Supply Variation
 
------
+The plot shows the VTC for $V_{DD}=1.8V$ and $V_{DD}=0.8V$. While the overall shape is preserved, the curve for the lower supply voltage has a noticeably steeper transition region, indicating higher voltage gain.
 
-### **References**
+#### Graph 2: VTC under Device Variation
 
-  * The sky130 Process Design Kit (PDK).
-  * ngspice Circuit Simulator Documentation.
-  * Kunal Ghosh, VSDIAT, sky130 Circuit Design Workshop Collaterals.
+This plot shows three VTC curves for different PMOS widths (Wp). As the PMOS width increases relative to the NMOS width, the switching threshold ($V_M$) clearly shifts to the right (a higher voltage).
+
+### Tabulated Results
+
+The effects of the variations on key inverter parameters are summarized below.
+
+| Variation Type | Parameter | Value | Effect |
+| :--- | :--- | :--- | :--- |
+| **Supply Variation** | $V_{DD}$ | 1.8 V | Nominal operation |
+| | | 0.8 V | VTC scales down, higher gain, much longer delay |
+| **Device Variation** | Wp/Wn Ratio | 0.5u / 0.39u | Lower switching threshold ($V_M$) |
+| | | 0.78u / 0.39u | Symmetric switching threshold ($V_M \approx V_{DD}/2$) |
+| | | 1.2u / 0.39u | Higher switching threshold ($V_M$) |
+
+### Observations / Analysis
+
+  * **What you see**:
+
+    1.  **Supply Variation**: Lowering $V_{DD}$ from 1.8V to 0.8V scales the VTC down. The output still swings rail-to-rail, and the fundamental inverting functionality is perfectly preserved. Interestingly, the transition region becomes much steeper, indicating a higher voltage gain.
+    2.  **Device Variation**: Increasing the width of the PMOS transistor makes the pull-up network stronger than the pull-down network. This shifts the switching threshold ($V_M$) from below $V_{DD}/2$ to above $V_{DD}/2$. Despite this shift, the gate continues to function correctly as an inverter.
+
+  * **Why it happens (Device Physics)**:
+
+    1.  **Supply Variation**: The CMOS inverter's rail-to-rail output is a structural property; as long as one transistor is fully on and the other is fully off, the output will be pulled to the supply rails, whatever their voltage. The increased gain at lower voltages occurs because the transistors operate with a smaller gate overdrive ($V_{gs} - V_t$), which pushes them deeper into saturation relative to the supply range, sharpening the transition.
+    2.  **Device Variation**: The switching threshold ($V_M$) is the input voltage where the pull-up (PMOS) and pull-down (NMOS) currents are equal. By making the PMOS wider, it can supply more current. To match this higher current, the NMOS requires a stronger on signal, which means a higher input voltage. This directly causes the switching point ($V_M$) to increase.
+
+  * **How this ties back to STA**: These variations are at the heart of Static Timing Analysis.
+
+    1.  **Voltage Variation**: Supply voltage is one of the three main factors in PVT (Process, Voltage, Temperature) corners. A drop in $V_{DD}$ (due to IR drop) drastically reduces the transistor drive current, which **significantly increases gate propagation delay**. STA must verify that timing constraints are met even at the lowest possible supply voltage.
+    2.  **Process Variation**: Random, unpredictable variations in transistor width, length, and threshold voltage during manufacturing are a primary concern. An STA tool analyzes the circuit across different process corners (e.g., fast NMOS/slow PMOS, slow NMOS/fast PMOS) to ensure that variations in switching thresholds and drive strengths do not cause timing failures or race conditions. The robustness of the CMOS structure ensures functionality, but STA is required to guarantee performance.
+
+### Conclusions
+
+These experiments demonstrate the exceptional **robustness** of the CMOS inverter topology. It maintains its logical functionality across significant variations in both power supply and device dimensions.
+
+However, this robustness in *function* does not imply robustness in *performance*. The analysis clearly shows that these variations directly impact key characteristics like voltage gain and switching threshold, which in turn have a first-order effect on circuit timing and noise margins. This is precisely why designers rely on extensive STA across multiple PVT corners—to ensure that a circuit that is functionally correct will also meet its performance targets under all expected real-world conditions.
+
+### References / Citations
+
+  * SKY130 Process Design Kit (PDK) model files for the `sky130_fd_pr__nfet_01v8` and `sky130_fd_pr__pfet_01v8` transistor models.
