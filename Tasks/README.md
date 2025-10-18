@@ -272,41 +272,35 @@ This characterization demonstrates how the physical behavior of modern, short-ch
 
 ### Introduction
 
-The purpose of this experiment is to analyze the **Voltage Transfer Characteristic (VTC)** of a standard CMOS inverter. The VTC plot, which shows the output voltage ($V_{out}$) as a function of the input voltage ($V_{in}$), is the most important characteristic of a digital logic gate. This analysis allows us to determine the inverter's switching behavior, its robustness to noise, and its overall DC performance. The key parameter extracted from this plot is the **switching threshold ($V_M$)**, which is the input voltage at which the output voltage is exactly equal to the input voltage.
+The purpose of this experiment is to analyze the **Voltage Transfer Characteristic (VTC)** of a standard CMOS inverter. The VTC plot, which shows the output voltage ($V_{out}$) as a function of the input voltage ($V_{in}$), is the most important characteristic of a digital logic gate. This analysis allows us to determine the inverter's switching behavior, its robustness to noise, and its overall DC performance. The key parameter extracted from this plot is the **switching threshold ($V_m$)**, which is the input voltage at which the output voltage is exactly equal to the input voltage.
 
 ### SPICE Netlists
 
 The following SPICE netlist was used to simulate the CMOS inverter and generate its VTC curve. It consists of one PMOS and one NMOS transistor from the sky130 library, connected in the standard inverter configuration. A DC sweep of the input voltage (`Vin`) from 0V to 1.8V is performed to trace the output voltage.
 
 ```spice
-* CMOS Inverter Voltage Transfer Characteristic (VTC)
+*Model Description
+.param temp=27
 
-* Include the sky130 library (typical-typical corner)
+*Including sky130 library files
 .lib "sky130_fd_pr/models/sky130.lib.spice" tt
 
-* --- Subcircuit for the Inverter ---
-.subckt inverter vin vout vdd gnd
-    * PMOS Transistor: M<name> <drain> <gate> <source> <body> <model>
-    MP1 vout vin vdd vdd sky130_fd_pr__pfet_01v8 w=0.78u l=0.15u
-
-    * NMOS Transistor: M<name> <drain> <gate> <source> <body> <model>
-    MN1 vout vin gnd gnd sky130_fd_pr__nfet_01v8 w=0.39u l=0.15u
-.ends inverter
-
-* --- Main Circuit ---
-* Power Supply
+*Netlist Description
+XM1 out in vdd vdd sky130_fd_pr__pfet_01v8 w=0.84 l=0.15
+XM2 out in 0 0 sky130_fd_pr__nfet_01v8 w=0.36 l=0.15
+Cload out 0 50fF
 Vdd vdd 0 1.8V
+Vin in 0 1.8V
 
-* Input Voltage Source for the sweep
-Vin vin 0 0
-
-* Instantiate the inverter subcircuit
-X1 vin vout vdd 0 inverter
-
-* --- DC Sweep Analysis ---
-* Sweep the input voltage (Vin) from 0V to 1.8V in 10mV steps
+*simulation commands
+.op
 .dc Vin 0 1.8 0.01
 
+.control
+run
+setplot dc1
+display
+.endc
 .end
 ```
 
@@ -314,15 +308,21 @@ X1 vin vout vdd 0 inverter
 
 #### Graph: CMOS Inverter VTC ($V_{out}$ vs. $V_{in}$)
 
-The plot above shows the inverter's output voltage as a function of its input voltage. The curve exhibits a very sharp, high-gain transition between the high and low output states. The **switching threshold ($V_M$)** is marked at the point where the VTC curve intersects the line $V_{out} = V_{in}$. This point represents the theoretical switching point of the inverter.
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/5c0fcae1-a248-4f13-a392-4712b1772468" />
+
+   The plot above shows the inverter's output voltage as a function of its input voltage. The curve exhibits a very sharp, high-gain transition between the high and low output states. The **switching threshold ($V_M$)** is marked at the point where the VTC curve intersects the line $V_{out} = V_{in}$. This point represents the theoretical switching point of the inverter. The PMOS used is `W=0.84u L=0.15u`, the NMOS used is `W=0.36u L=0.15u` with a capacitive load `50fF`.
 
 ### Tabulated Results
 
-The primary DC parameter extracted from the VTC is the switching threshold voltage, $V_M$.
+The primary DC parameter extracted from the VTC is the switching threshold voltage, $V_m$. The value is found at the intersection of the VTC curve and the line $V_{out} = V_{in}$. In `ngspice`, this can be found precisely using the `meas` command:
 
-| Parameter | Extracted Value | Method & Commands Used |
-| :--- | :--- | :--- |
-| **Switching Threshold ($V_M$)** | *TBD (e.g., \~0.9 V)* | The value is found at the intersection of the VTC curve and the line $V_{out} = V_{in}$. In `ngspice`, this can be found precisely using the `meas` command:<br><br>`meas dc vm find vin when v(vout)=v(vin)` |
+```ngspice
+meas dc vm find in when v(out)=v(in)
+``` 
+
+| Parameter | Extracted Value |
+| :--- | :----|
+| **Switching Threshold ($V_m$)** | **0.8769191V** | 
 
 ### Observations / Analysis
 
