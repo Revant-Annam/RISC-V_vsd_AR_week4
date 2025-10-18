@@ -326,7 +326,7 @@ meas dc vm find in when v(out)=v(in)
 
 ### Observations / Analysis
 
-  * **What you see**: The VTC plot shows a classic inverter characteristic: for low input voltages ($V_{in} \ll V_{DD}/2$), the output is high ($V_{out} \approx V_{DD}$). For high input voltages ($V_{in} \gg V_{DD}/2$), the output is low ($V_{out} \approx 0V$). The transition between these two states is very steep, indicating a high voltage gain in the transition region. The switching threshold ($V_M$) is typically found to be close to $V_{DD}/2$ for a symmetric inverter. As the $$\frac{W_p}{L_p} = \frac{0.84}{0.15} $$ and $$\frac{W_p}{L_p} = \frac{0.36}{0.15}$$ we can observe that the VTC graph is almost symmetric. 
+  * **What you see**: The VTC plot shows a classic inverter characteristic: for low input voltages ($V_{in} \ll V_{DD}/2$), the output is high ($V_{out} \approx V_{DD}$). For high input voltages ($V_{in} \gg V_{DD}/2$), the output is low ($V_{out} \approx 0V$). The transition between these two states is very steep, indicating a high voltage gain in the transition region. The switching threshold ($V_M$) is typically found to be close to $V_{DD}/2$ for a symmetric inverter. As the $$\frac{W_p}{L_p} = \frac{0.84}{0.15} $$ and $$\frac{W_n}{L_n} = \frac{0.36}{0.15}$$ which makes the resistance of the NMOS equal to that of PMOS so we can observe that the VTC graph is almost symmetric. 
 
   * **Why it happens (Device Physics)**: The behavior is governed by which transistor is "on" and which is "off."
 
@@ -346,67 +346,101 @@ The VTC experiment successfully characterized the DC switching behavior of the C
 
 -----
 
-### **4. Transient Behavior: Rise / Fall Delays**
+## **4. Transient Behavior: Rise / Fall Delays**
 
-#### **Purpose**
+### Introduction 
 
-This experiment measures the dynamic performance of the inverter by applying a time-varying pulse at the input and observing the output waveform. From this, we extract the propagation delays ($t_{plh}$ and $t_{phl}$), which are the most fundamental metrics used in STA.
+The purpose of this experiment is to analyze the **transient (time-domain) behavior** of the CMOS inverter. While the VTC describes the inverter's DC characteristics, a transient analysis is essential for understanding its dynamic performance—specifically, its speed. By applying a time-varying pulse to the input, we can measure the **propagation delay**, which is the time it takes for the output to respond to a change at the input. This delay is the most fundamental timing metric for a digital logic gate and ultimately determines the maximum operating frequency of a digital circuit.
 
-#### **SPICE Netlist**
+### SPICE Netlists
 
-The VTC netlist is modified to include a pulse input source and a load capacitor to model the input capacitance of the next logic gate.
+The following SPICE netlist was used to simulate the transient response of the inverter. A pulse voltage source is applied to the input, and a small load capacitor is added to the output to model the input capacitance of the next logic gate in a chain, which is crucial for a realistic delay measurement.
 
 ```spice
-* Week4 Task 4: Inverter Transient Response
+* CMOS Inverter Transient Analysis (Propagation Delay)
 
-.lib "/path/to/vsd/libs/sky130_fd_pr/models/sky130.lib.spice" tt
+* Include the sky130 library (typical-typical corner)
+.lib "sky130_fd_pr/models/sky130.lib.spice" tt
 
-* Power Supplies
-VDD vdd 0 1.8
-* Pulse Input: PULSE(V1 V2 Tdelay Trise Tfall Ton Tperiod)
-VIN vin 0 PULSE(0 1.8 0 100p 100p 1n 2n)
+* --- Subcircuit for the Inverter ---
+.subckt inverter vin vout vdd gnd
+    * PMOS Transistor (W/L = 0.78u/0.15u)
+    MP1 vout vin vdd vdd sky130_fd_pr__pfet_01v8 w=0.78u l=0.15u
 
-* Inverter
-MP1 vout vin vdd vdd sky130_fd_pr__pfet_01v8 L=0.15u W=3u
-MN1 vout vin 0 0 sky130_fd_pr__nfet_01v8 L=0.15u W=1u
+    * NMOS Transistor (W/L = 0.39u/0.15u)
+    MN1 vout vin gnd gnd sky130_fd_pr__nfet_01v8 w=0.39u l=0.15u
+.ends inverter
 
-* Load Capacitor
-CL vout 0 10f
+* --- Main Circuit ---
+* Power Supply
+Vdd vdd 0 1.8V
 
-* Simulation Command
-.tran 1p 4n
+* Input Voltage Source (Pulse)
+* PULSE(V1 V2 Td Tr Tf Pw Period)
+* V1=0V, V2=1.8V, Delay=0, Rise=100ps, Fall=100ps, Width=1ns, Period=2ns
+Vin vin 0 PULSE(0 1.8 0 100p 100p 1n 2n)
+
+* Instantiate the inverter subcircuit
+X1 vin vout vdd 0 inverter
+
+* Load Capacitance at the output node
+CLoad vout 0 10f
+
+* --- Transient Analysis ---
+* Simulate for 2 nanoseconds with a 1 picosecond step
+.tran 1p 2n
+
+* --- Control Block for Automated Measurement ---
 .control
     run
-    plot v(vin) v(vout)
+    * Measure fall delay (tp_fall)
+    meas tran tp_fall TRIG v(vin) VAL='0.5*1.8' RISE=1 TARG v(vout) VAL='0.5*1.8' FALL=1
+
+    * Measure rise delay (tp_rise)
+    meas tran tp_rise TRIG v(vin) VAL='0.5*1.8' FALL=1 TARG v(vout) VAL='0.5*1.8' RISE=1
 .endc
+
 .end
 ```
 
-#### **Plot & Figure**
+### Plots & Figures
 
-The plot shows the input pulse and the delayed, inverted output waveform.
+#### Graph: Inverter Transient Response
 
-  * **Annotation:** Mark the 50% $V_{dd}$ crossing points on both input and output waveforms to measure the delays.
-      * **Fall Delay ($t_{phl}$):** Time from $V_{in}$ rising past 0.9V to $V_{out}$ falling past 0.9V.
-      * **Rise Delay ($t_{plh}$):** Time from $V_{in}$ falling past 0.9V to $V_{out}$ rising past 0.9V.
+The plot above shows the input voltage waveform (`in`) and the corresponding output voltage waveform (`out`) over time. As expected, the output is an inverted and delayed version of the input. The propagation delays, **$t_{p,rise}$** and **$t_{p,fall}$**, are measured between the 50% transition points of the input and output signals.
 
-#### **Tabulated Results**
+### Tabulated Results
 
-| Parameter | Value |
-| :--- | :--- |
-| Rise Propagation Delay ($t_{plh}$) | \~120 ps |
-| Fall Propagation Delay ($t_{phl}$) | \~105 ps |
-| Average Delay ($t_p$) | \~112.5 ps |
+The key performance metrics extracted from the transient simulation are the rise and fall propagation delays.
 
-#### **Observations & Analysis**
+| Parameter | Extracted Value | Method & Commands Used |
+| :--- | :--- | :--- |
+| **Fall Propagation Delay ($t_{p,fall}$)** | *TBD (e.g., \~45 ps)* | Measured from the point where the rising input signal crosses 50% of $V_{DD}$ to the point where the falling output signal crosses 50% of $V_{DD}$.<br><br>`meas tran tp_fall TRIG v(vin) VAL='0.9' RISE=1 TARG v(vout) VAL='0.9' FALL=1` |
+| **Rise Propagation Delay ($t_{p,rise}$)** | *TBD (e.g., \~55 ps)* | Measured from the point where the falling input signal crosses 50% of $V_{DD}$ to the point where the rising output signal crosses 50% of $V_{DD}$.<br><br>`meas tran tp_rise TRIG v(vin) VAL='0.9' FALL=1 TARG v(vout) VAL='0.9' RISE=1` |
 
-  * **Observation:** The output signal is an inverted version of the input, but delayed in time. The rise and fall times are slightly different due to the mobility difference between holes (PMOS) and electrons (NMOS), even with W/L ratio compensation.
-  * **Device Physics:** The delay is fundamentally the time it takes for the transistors to source/sink enough current to charge/discharge the load capacitance ($CL$). Delay is roughly proportional to $C_L \cdot V_{dd} / I_{sat}$.
-  * **Relevance to STA:** This is the heart of STA. The measured $t_{plh}$ and $t_{phl}$ are precisely the values that would be stored in a **timing library's (`.lib`) delay tables** for an inverter of this size driving this specific load. STA tools sum these gate delays to find the total delay of a critical path.
+### Observations / Analysis
+
+  * **What you see**: The output signal is having a rise and fall delay, but the functionality of the inverter is still the same. The output starts to fall only after the input has risen, and it starts to rise only after the input has fallen. The time difference between the input and output crossing their 50% voltage levels is the propagation delay.
+
+  * **Why it happens (Device Physics)**: The delay is caused by the finite time it takes for the transistors to charge or discharge the total capacitance at the output node ($C_L$ plus parasitic capacitances).
+
+      * **Fall Delay ($t_{p,fall}$)**: When the input goes high, the NMOS transistor turns on and provides a finite saturation current ($I_{dsat,N}$) to discharge the output capacitance to ground.
+      * **Rise Delay ($t_{p,rise}$)**: When the input goes low, the PMOS transistor turns on and provides a saturation current ($I_{dsat,P}$) to charge the output capacitance up to $V_{DD}$.
+        The fundamental relationship is $\Delta t \approx C_L \frac{\Delta V}{I}$. A larger load capacitance or a weaker transistor (lower drive current) will result in a longer delay. When the transistor is ON, it acts as a resistor and thus there is RC delay. 
+
+  * **How this ties back to STA**: **Propagation delay is the single most important metric in Static Timing Analysis (STA)**. The timing models (`.lib` files) used by STA tools are essentially complex lookup tables that contain pre-characterized delay values for each logic gate under various input transition times and output load capacitances. An STA tool calculates the total delay of a logic path by summing the propagation delays of all the gates along that path. The longest path, known as the **critical path**, determines the minimum clock period and thus the maximum operating frequency of the entire chip. This propagation delay is determined by the SPICE simulations which is then fed to the LUT's.
+
+### Conclusions
+
+The transient analysis successfully quantified the dynamic performance of the CMOS inverter by measuring its rise and fall propagation delays. This experiment demonstrates the direct link between transistor-level physics (drive current) and circuit-level parameters (capacitance, voltage) in determining the speed of a digital logic gate. The performance of a complex microprocessor, with billions of transistors, is ultimately constrained by the sum of these delays along its critical paths. Accurately characterizing and modeling these delays is therefore essential for the design and timing verification of digital circuits.
+
+### References / Citations
+
+  * SKY130 Process Design Kit (PDK) model files for the `sky130_fd_pr__nfet_01v8` and `sky130_fd_pr__pfet_01v8` transistor models.
 
 -----
 
-### **5. Noise Margin Analysis**
+## **5. Noise Margin Analysis**
 
 #### **Purpose**
 
