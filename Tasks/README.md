@@ -119,10 +119,6 @@ Any variations in this I-V behavior due to process, voltage, or temperature (PVT
 
 -----
 
-Of course. Here is your work documented in the requested report format, based on the experiments you described.
-
------
-
 ## 2. Threshold Voltage Extraction & Velocity Saturation 
 
 ### Introduction
@@ -130,7 +126,7 @@ Of course. Here is your work documented in the requested report format, based on
 The purpose of these experiments is to characterize the fundamental electrical behavior of a short-channel NMOS transistor from the sky130 Process Design Kit (PDK). This characterization is crucial for understanding how modern, scaled-down transistors differ from ideal long-channel devices. Two primary analyses were performed:
 
 1.  **$I_d$ vs. $V_{ds}$ (Output Characteristics)**: This experiment aims to visualize the transistor's operational regions and observe the impact of **velocity saturation** on its current-driving capability.
-2.  **$I_d$ vs. $V_{gs}$ (Transfer Characteristics)**: This experiment is done to extract the transistor's **threshold voltage ($V_t$)**, a critical parameter that tells its turn-on point, using a method suitable for velocity-saturated devices.
+2.  **$I_d$ vs. $V_{gs}$ (Transfer Characteristics)**: This experiment is done to extract the transistor's **threshold voltage ($V_t$)**, a critical parameter that tells its turn-on point, using a method suitable for velocity-saturated devices(short-channel devices).
 
 ### SPICE Netlists
 
@@ -139,20 +135,27 @@ The purpose of these experiments is to characterize the fundamental electrical b
 This netlist performs a nested DC sweep to generate multiple output curves.
 
 ```spice
-* NMOS Output Characteristics (Id vs. Vds)
+*Model Description
+.param temp=27
 
+*Including sky130 library files
 .lib "sky130_fd_pr/models/sky130.lib.spice" tt
 
-* Device Under Test (W/L = 0.39u/0.15u)
-XM1 vdd_node gate_node 0 0 sky130_fd_pr__nfet_01v8 w=0.39u l=0.15u
+*Netlist Description
+XM1 Vdd n1 0 0 sky130_fd_pr__nfet_01v8 w=0.39 l=0.15
+R1 n1 in 55
+Vdd vdd 0 1.8V
+Vin in 0 1.8V
 
-* Voltage Sources
-Vds vdd_node 0 0
-Vgs gate_node 0 0
+*simulation commands
+.op
+.dc Vdd 0 1.8 0.1 Vin 0 1.8 0.2
 
-* Nested DC Sweep Analysis
-.dc Vds 0 1.8 0.01 Vgs 0 1.8 0.2
-
+.control
+run
+display
+setplot dc1
+.endc
 .end
 ```
 
@@ -161,20 +164,27 @@ Vgs gate_node 0 0
 This netlist sweeps the gate voltage while keeping the drain voltage fixed to ensure the transistor is in saturation.
 
 ```spice
-* NMOS Transfer Characteristics (Id vs. Vgs) for Vth Extraction
+*Model Description
+.param temp=27
 
+*Including sky130 library files
 .lib "sky130_fd_pr/models/sky130.lib.spice" tt
 
-* Device Under Test (W/L = 0.39u/0.15u)
-XM1 vdd_node gate_node 0 0 sky130_fd_pr__nfet_01v8 w=0.39u l=0.15u
+*Netlist Description
+XM1 Vdd n1 0 0 sky130_fd_pr__nfet_01v8 w=0.39 l=0.15
+R1 n1 in 55
+Vdd vdd 0 1.8V
+Vin in 0 1.8V
 
-* Voltage Sources
-Vdd vdd_node 0 1.8V
-Vin gate_node 0 0
+*simulation commands
+.op
+.dc Vin 0 1.8 0.1 
 
-* DC Sweep Analysis
-.dc Vin 0 1.8 0.01
-
+.control
+run
+display
+setplot dc1
+.endc
 .end
 ```
 
@@ -184,9 +194,15 @@ Vin gate_node 0 0
 
 The plot shows drain current ($I_d$) versus drain-to-source voltage ($V_{ds}$). Each curve corresponds to a different gate voltage ($V_{gs}$). 
 
+<img width="1920" height="1080" alt="Screenshot from 2025-10-13 21-54-28" src="https://github.com/user-attachments/assets/546a8d9b-8b63-4983-9183-0b7fb33768df" />
+
+
 #### Graph 2: NMOS Transfer Characteristics ($I_d$ vs. $V_{gs}$)
 
-This plot shows drain current ($I_d$) versus gate-to-source voltage ($V_{gs}$). The tangent line is extrapolated from the linear portion of the curve. Its intersection with the x-axis provides the **threshold voltage ($V_t$)**.
+This plot shows drain current ($I_d$) versus gate-to-source voltage ($V_{gs}$) for $V_{ds} = 1.8V$. The tangent line is extrapolated from the linear portion of the curve. Its intersection with the x-axis provides the **threshold voltage ($V_t$)**.
+
+<img width="1920" height="1080" alt="Screenshot from 2025-10-13 21-55-10" src="https://github.com/user-attachments/assets/a65e350e-6ff8-4938-b32d-39ec61c00c16" />
+
 
 ### Tabulated Results
 
