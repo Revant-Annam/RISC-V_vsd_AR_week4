@@ -201,7 +201,7 @@ The plot shows drain current ($I_d$) versus drain-to-source voltage ($V_{ds}$). 
 
 This plot shows drain current ($I_d$) versus gate-to-source voltage ($V_{gs}$) for $V_{ds} = 1.8V$. The tangent line is extrapolated from the linear portion of the curve. Its intersection with the x-axis provides the **threshold voltage ($V_t$)**.
 
-<img width="1920" height="1080" alt="Screenshot from 2025-10-13 21-55-10" src="https://github.com/user-attachments/assets/a65e350e-6ff8-4938-b32d-39ec61c00c16" />
+<img width="1548" height="871" alt="image" src="https://github.com/user-attachments/assets/291fe5d9-71e2-4eda-bf74-fc4269e74e67" />
 
 
 ### Tabulated Results
