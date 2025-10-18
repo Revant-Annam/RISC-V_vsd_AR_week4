@@ -357,55 +357,34 @@ The purpose of this experiment is to analyze the **transient (time-domain) behav
 The following SPICE netlist was used to simulate the transient response of the inverter. A pulse voltage source is applied to the input, and a small load capacitor is added to the output to model the input capacitance of the next logic gate in a chain, which is crucial for a realistic delay measurement.
 
 ```spice
-* CMOS Inverter Transient Analysis (Propagation Delay)
+*Model Description
+.param temp=27
 
-* Include the sky130 library (typical-typical corner)
+*Including sky130 library files
 .lib "sky130_fd_pr/models/sky130.lib.spice" tt
 
-* --- Subcircuit for the Inverter ---
-.subckt inverter vin vout vdd gnd
-    * PMOS Transistor (W/L = 0.78u/0.15u)
-    MP1 vout vin vdd vdd sky130_fd_pr__pfet_01v8 w=0.78u l=0.15u
+*Netlist Description
+XM1 out in vdd vdd sky130_fd_pr__pfet_01v8 w=0.84 l=0.15
+XM2 out in 0 0 sky130_fd_pr__nfet_01v8 w=0.36 l=0.15
 
-    * NMOS Transistor (W/L = 0.39u/0.15u)
-    MN1 vout vin gnd gnd sky130_fd_pr__nfet_01v8 w=0.39u l=0.15u
-.ends inverter
-
-* --- Main Circuit ---
-* Power Supply
+Cload out 0 50fF
 Vdd vdd 0 1.8V
+Vin in 0 PULSE(0V 1.8V 0 0.1ns 0.1ns 2ns 4ns)
 
-* Input Voltage Source (Pulse)
-* PULSE(V1 V2 Td Tr Tf Pw Period)
-* V1=0V, V2=1.8V, Delay=0, Rise=100ps, Fall=100ps, Width=1ns, Period=2ns
-Vin vin 0 PULSE(0 1.8 0 100p 100p 1n 2n)
+*simulation commands
+.tran 1n 10n
 
-* Instantiate the inverter subcircuit
-X1 vin vout vdd 0 inverter
-
-* Load Capacitance at the output node
-CLoad vout 0 10f
-
-* --- Transient Analysis ---
-* Simulate for 2 nanoseconds with a 1 picosecond step
-.tran 1p 2n
-
-* --- Control Block for Automated Measurement ---
 .control
-    run
-    * Measure fall delay (tp_fall)
-    meas tran tp_fall TRIG v(vin) VAL='0.5*1.8' RISE=1 TARG v(vout) VAL='0.5*1.8' FALL=1
-
-    * Measure rise delay (tp_rise)
-    meas tran tp_rise TRIG v(vin) VAL='0.5*1.8' FALL=1 TARG v(vout) VAL='0.5*1.8' RISE=1
+run
 .endc
-
 .end
 ```
 
 ### Plots & Figures
 
 #### Graph: Inverter Transient Response
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/1fab228b-7fc9-42e4-b212-7913bd2c743b" />
 
 The plot above shows the input voltage waveform (`in`) and the corresponding output voltage waveform (`out`) over time. As expected, the output is an inverted and delayed version of the input. The propagation delays, **$t_{p,rise}$** and **$t_{p,fall}$**, are measured between the 50% transition points of the input and output signals.
 
@@ -415,8 +394,8 @@ The key performance metrics extracted from the transient simulation are the rise
 
 | Parameter | Extracted Value | Method & Commands Used |
 | :--- | :--- | :--- |
-| **Fall Propagation Delay ($t_{p,fall}$)** | *TBD (e.g., \~45 ps)* | Measured from the point where the rising input signal crosses 50% of $V_{DD}$ to the point where the falling output signal crosses 50% of $V_{DD}$.<br><br>`meas tran tp_fall TRIG v(vin) VAL='0.9' RISE=1 TARG v(vout) VAL='0.9' FALL=1` |
-| **Rise Propagation Delay ($t_{p,rise}$)** | *TBD (e.g., \~55 ps)* | Measured from the point where the falling input signal crosses 50% of $V_{DD}$ to the point where the rising output signal crosses 50% of $V_{DD}$.<br><br>`meas tran tp_rise TRIG v(vin) VAL='0.9' FALL=1 TARG v(vout) VAL='0.9' RISE=1` |
+| **Fall Propagation Delay ($t_{p,fall}$)** | **288.2233 ps** | Measured from the point where the rising input signal crosses 50% of $V_{DD}$ to the point where the falling output signal crosses 50% of $V_{DD}$.<br><br>`meas tran tp_fall TRIG v(in) VAL='0.9' RISE=1 TARG v(out) VAL='0.9' FALL=1` |
+| **Rise Propagation Delay ($t_{p,rise}$)** | **332.5613 ps** | Measured from the point where the falling input signal crosses 50% of $V_{DD}$ to the point where the rising output signal crosses 50% of $V_{DD}$.<br><br>`meas tran tp_rise TRIG v(in) VAL='0.9' FALL=1 TARG v(out) VAL='0.9' RISE=1` |
 
 ### Observations / Analysis
 
