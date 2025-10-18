@@ -430,54 +430,38 @@ The purpose of this experiment is to perform a **Noise Margin Analysis** on the 
 The following SPICE netlist was used to generate the VTC curve for an inverter with a PMOS width (`Wp`), making it almost asymmetric. A DC sweep of the input voltage is performed to trace the output.
 
 ```spice
-* CMOS Inverter VTC for Noise Margin Analysis
+*Model Description
+.param temp=27
 
-* Include the sky130 library (typical-typical corner)
+*Including sky130 library files
 .lib "sky130_fd_pr/models/sky130.lib.spice" tt
 
-* --- Subcircuit for the Inverter ---
-.subckt inverter vin vout vdd gnd
-    * PMOS Transistor with modified width (Wp=0.5u)
-    MP1 vout vin vdd vdd sky130_fd_pr__pfet_01v8 w=0.5u l=0.15u
+*Netlist Description
+XM1 out in vdd vdd sky130_fd_pr__pfet_01v8 w=1 l=0.15
+XM2 out in 0 0 sky130_fd_pr__nfet_01v8 w=0.36 l=0.15
 
-    * NMOS Transistor (Wn=0.39u)
-    MN1 vout vin gnd gnd sky130_fd_pr__nfet_01v8 w=0.39u l=0.15u
-.ends inverter
+Cload out 0 50fF
 
-* --- Main Circuit ---
 Vdd vdd 0 1.8V
-Vin vin 0 0
-X1 vin vout vdd 0 inverter
+Vin in 0 1.8V
 
-* --- DC Sweep Analysis ---
-.dc Vin 0 1.8 0.001
+*simulation commands
+.op
+.dc Vin 0 1.8 0.01
 
-* --- Control Block for Automated Measurement ---
 .control
-    run
-    setplot dc1
-
-    * Find V_IL and V_IH (where gain = -1)
-    meas dc v_il find v(vin) when deriv(v(vout))/deriv(v(vin))=-1.0
-    meas dc v_ih find v(vin) when deriv(v(vout))/deriv(v(vin))=-1.0 cross=last
-
-    * Find V_OH (output voltage when input is V_IL)
-    meas dc v_oh find v(vout) when v(vin)=v_il
-
-    * Find V_OL (output voltage when input is V_IH)
-    meas dc v_ol find v(vout) when v(vin)=v_ih
-
-    * Calculate Noise Margins
-    meas dc nm_l param='v_il - v_ol'
-    meas dc nm_h param='v_oh - v_ih'
+run
+setplot dc1
+display
 .endc
-
 .end
 ```
 
 ### Plots & Figures
 
 #### Graph: VTC with Noise Margin Annotations
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/2ea3fd8c-4c47-4ac1-9c8c-108568c702fa" />
 
 The plot above shows the inverter's VTC. The key points for noise margin analysis are annotated:
 
@@ -490,14 +474,14 @@ The plot above shows the inverter's VTC. The key points for noise margin analysi
 
 The key parameters extracted from the VTC are the logic level voltages and the resulting noise margins.
 
-| Parameter | Extracted Value | Method & Commands Used |
-| :--- | :--- | :--- |
-| **Input Low Voltage ($V_{IL}$)** | *TBD (e.g., \~0.7 V)* | The input voltage where the VTC gain is -1. <br>`meas dc v_il find v(vin) when deriv(v(vout))/deriv(v(vin))=-1.0` |
-| **Input High Voltage ($V_{IH}$)** | *TBD (e.g., \~1.0 V)* | The second input voltage where the VTC gain is -1. <br>`meas dc v_ih find v(vin) when deriv(v(vout))/deriv(v(vin))=-1.0 cross=last` |
-| **Output High Voltage ($V_{OH}$)** | *TBD* | The value of the output voltage when the input is $V_{IL}$.<br>`meas dc v_oh find v(vout) when v(vin)=v_il` |
-| **Output Low Voltage ($V_{OL}$)** | *TBD* | The value of the output voltage when the input is $V_{IH}$.<br>`meas dc v_ol find v(vout) when v(vin)=v_ih` |
-| **Noise Margin Low ($NM_L$)** | *TBD* | Defined as $V_{IL} - V_{OL}$. <br>`meas dc nm_l param='v_il-v_ol'` |
-| **Noise Margin High ($NM_H$)** | *TBD* | Defined as $V_{OH} - V_{IH}$. <br>`meas dc nm_h param='v_oh-v_ih'` |
+| Parameter | Extracted Value | 
+| :--- | :--- |
+| **Input Low Voltage ($V_{IL}$)** | **0.757798 V** | 
+| **Input High Voltage ($V_{IH}$)** | **0.987156 V** |
+| **Output High Voltage ($V_{OH}$)** | **1.73111 V** |
+| **Output Low Voltage ($V_{OL}$)** | **0.0955556 V** |
+| **Noise Margin Low ($NM_L$)** | **0.6622424 V** | 
+| **Noise Margin High ($NM_H$)** | **0.743954 V** | 
 
 ### Observations / Analysis
 
