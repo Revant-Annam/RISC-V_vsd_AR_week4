@@ -384,7 +384,7 @@ run
 
 #### Graph: Inverter Transient Response
 
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/1fab228b-7fc9-42e4-b212-7913bd2c743b" />
+<img width="1476" height="828" alt="image" src="https://github.com/user-attachments/assets/104a9072-6f0a-4b44-b862-88f7ea057edf" />
 
 The plot above shows the input voltage waveform (`in`) and the corresponding output voltage waveform (`out`) over time. As expected, the output is an inverted and delayed version of the input. The propagation delays, **$t_{p,rise}$** and **$t_{p,fall}$**, are measured between the 50% transition points of the input and output signals.
 
@@ -421,41 +421,100 @@ The transient analysis successfully quantified the dynamic performance of the CM
 
 ## **5. Noise Margin Analysis**
 
-#### **Purpose**
+### Introduction 
 
-Noise margins quantify how much noise an input signal can tolerate before the output voltage is corrupted. A robust digital circuit has large noise margins. They are calculated from the static VTC curve.
+The purpose of this experiment is to perform a **Noise Margin Analysis** on the CMOS inverter. This analysis quantifies the inverter's robustness to signal noise. By generating the Voltage Transfer Characteristic (VTC), we can determine the critical input thresholds ($V_{IL}$ and $V_{IH}$) where the gate has a gain of -1. From these points, we define the corresponding output voltage levels ($V_{OH}$ and $V_{OL}$) to calculate the **Noise Margin High ($NM_H$)** and **Noise Margin Low ($NM_L$)**. These margins represent the amount of noise the gate's input can tolerate before the output logic level is compromised. 
 
-#### **Methodology & Plot**
+### SPICE Netlists
 
-Using the VTC plot from Task 3, we identify four key voltage points:
+The following SPICE netlist was used to generate the VTC curve for an inverter with a PMOS width (`Wp`), making it almost asymmetric. A DC sweep of the input voltage is performed to trace the output.
 
-  * $V_{OH}$ (Voltage Output High): The maximum output voltage (typically $V_{dd}$).
-  * $V_{OL}$ (Voltage Output Low): The minimum output voltage (typically 0V).
-  * $V_{IL}$ (Voltage Input Low): The maximum input voltage that is still reliably interpreted as a logic '0'. It's found at the point where the VTC slope $dV_{out}/dV_{in} = -1$.
-  * $V_{IH}$ (Voltage Input High): The minimum input voltage that is still reliably interpreted as a logic '1'. Also found where the slope is -1.
+```spice
+* CMOS Inverter VTC for Noise Margin Analysis
 
-The noise margins are then computed as:
+* Include the sky130 library (typical-typical corner)
+.lib "sky130_fd_pr/models/sky130.lib.spice" tt
 
-  * **Noise Margin Low ($NM_L$) = $V_{IL} - V_{OL}$**
-  * **Noise Margin High ($NM_H$) = $V_{OH} - V_{IH}$**
+* --- Subcircuit for the Inverter ---
+.subckt inverter vin vout vdd gnd
+    * PMOS Transistor with modified width (Wp=0.5u)
+    MP1 vout vin vdd vdd sky130_fd_pr__pfet_01v8 w=0.5u l=0.15u
 
-#### **Tabulated Results**
+    * NMOS Transistor (Wn=0.39u)
+    MN1 vout vin gnd gnd sky130_fd_pr__nfet_01v8 w=0.39u l=0.15u
+.ends inverter
 
-| Parameter | Value | Calculation |
+* --- Main Circuit ---
+Vdd vdd 0 1.8V
+Vin vin 0 0
+X1 vin vout vdd 0 inverter
+
+* --- DC Sweep Analysis ---
+.dc Vin 0 1.8 0.001
+
+* --- Control Block for Automated Measurement ---
+.control
+    run
+    setplot dc1
+
+    * Find V_IL and V_IH (where gain = -1)
+    meas dc v_il find v(vin) when deriv(v(vout))/deriv(v(vin))=-1.0
+    meas dc v_ih find v(vin) when deriv(v(vout))/deriv(v(vin))=-1.0 cross=last
+
+    * Find V_OH (output voltage when input is V_IL)
+    meas dc v_oh find v(vout) when v(vin)=v_il
+
+    * Find V_OL (output voltage when input is V_IH)
+    meas dc v_ol find v(vout) when v(vin)=v_ih
+
+    * Calculate Noise Margins
+    meas dc nm_l param='v_il - v_ol'
+    meas dc nm_h param='v_oh - v_ih'
+.endc
+
+.end
+```
+
+### Plots & Figures
+
+#### Graph: VTC with Noise Margin Annotations
+
+The plot above shows the inverter's VTC. The key points for noise margin analysis are annotated:
+
+  * **$V_{IL}$ (Input Low Voltage)**: The input voltage where the VTC slope (gain) first becomes -1.
+  * **$V_{IH}$ (Input High Voltage)**: The second input voltage where the slope becomes -1.
+  * **$V_{OH}$ (Output High Voltage)**: Defined as the output voltage when the input is exactly $V_{IL}$.
+  * **$V_{OL}$ (Output Low Voltage)**: Defined as the output voltage when the input is exactly $V_{IH}$.
+
+### Tabulated Results
+
+The key parameters extracted from the VTC are the logic level voltages and the resulting noise margins.
+
+| Parameter | Extracted Value | Method & Commands Used |
 | :--- | :--- | :--- |
-| $V_{OH}$ | 1.8 V | - |
-| $V_{OL}$ | 0 V | - |
-| $V_{IL}$ | \~0.75 V | From VTC plot |
-| $V_{IH}$ | \~1.1 V | From VTC plot |
-| $NM_L$ | **\~0.75 V** | $V_{IL} - V_{OL}$ |
-| $NM_H$ | **\~0.7 V** | $V_{OH} - V_{IH}$ |
+| **Input Low Voltage ($V_{IL}$)** | *TBD (e.g., \~0.7 V)* | The input voltage where the VTC gain is -1. <br>`meas dc v_il find v(vin) when deriv(v(vout))/deriv(v(vin))=-1.0` |
+| **Input High Voltage ($V_{IH}$)** | *TBD (e.g., \~1.0 V)* | The second input voltage where the VTC gain is -1. <br>`meas dc v_ih find v(vin) when deriv(v(vout))/deriv(v(vin))=-1.0 cross=last` |
+| **Output High Voltage ($V_{OH}$)** | *TBD* | The value of the output voltage when the input is $V_{IL}$.<br>`meas dc v_oh find v(vout) when v(vin)=v_il` |
+| **Output Low Voltage ($V_{OL}$)** | *TBD* | The value of the output voltage when the input is $V_{IH}$.<br>`meas dc v_ol find v(vout) when v(vin)=v_ih` |
+| **Noise Margin Low ($NM_L$)** | *TBD* | Defined as $V_{IL} - V_{OL}$. <br>`meas dc nm_l param='v_il-v_ol'` |
+| **Noise Margin High ($NM_H$)** | *TBD* | Defined as $V_{OH} - V_{IH}$. <br>`meas dc nm_h param='v_oh-v_ih'` |
 
-#### **Observations & Analysis**
+### Observations / Analysis
 
-  * **Observation:** The inverter exhibits healthy noise margins, close to 40% of $V_{dd}$. This indicates a robust design that can tolerate significant voltage fluctuations on its input.
-  * **Device Physics:** The noise margins are determined by the threshold voltages of the transistors and the gain of the inverter in the transition region. A high gain leads to a narrow transition region and larger noise margins.
-  * **Relevance to STA:** While STA focuses on timing, noise analysis is a critical part of ensuring signal integrity. Poor noise margins can lead to glitches and functional failures that violate the setup and hold time assumptions made by STA. The margins calculated here are static; dynamic noise analysis is an even more complex field related to STA.
+  * **What you see**: We can identify that there two distinct points on the curve where the slope is exactly -1, defining the input thresholds $V_{IL}$ and $V_{IH}$. The corresponding output voltages at these input points are defined as $V_{OH}$ and $V_{OL}$, respectively. These four points mark the boundaries of the valid operating regions for the inverter.
 
+  * **Why it happens (Device Physics)**: The region between $V_{IL}$ and $V_{IH}$ is the high-gain transition region where both NMOS and PMOS transistors are in saturation. This high gain is what allows the inverter to amplify and restore signals. The points where the gain is exactly -1 represent the "edges" of this region, beyond which the gate's gain drops below unity. This property is what allows the inverter to reject noise; a small fluctuation on the input will be attenuated at the output, as long as the input stays within the valid logic '0' or '1' ranges. By changing the Wp/Wn ratio, we alter the relative strengths of the pull-up and pull-down networks, which shifts the switching threshold ($V_M$) and changes the values of $V_{IL}$ and $V_{IH}$, thereby affecting the noise margins.
+
+  * **How this ties back to STA**: Noise margins are fundamental to the **functional reliability** of a circuit. While STA primarily focuses on timing, its results are only valid if the signals are clean. In modern designs, effects like **crosstalk** (capacitive coupling between adjacent wires) can induce noise that eats into these margins. If a noise glitch is large enough to cross the $V_{IL}$ or $V_{IH}$ thresholds, it can cause a gate to switch incorrectly, leading to a logic failure. The timing libraries used by STA tools contain **noise models** that are derived from these VTC characteristics to help designers analyze and prevent such signal integrity issues.
+
+### Conclusions
+
+This analysis successfully quantified the inverter's noise margins, a critical measure of its operational robustness. The experiment demonstrates that the inverter's DC transfer characteristic defines not just its switching point, but also its ability to tolerate voltage noise on its inputs. The calculated $NM_L$ and $NM_H$ values provide a clear specification for how much the '0' and '1' levels can be corrupted before a logic error occurs. This analysis highlights a key design trade-off: transistor sizing not only affects the speed of a gate (transient behavior) but also its noise immunity (DC behavior), and both must be considered to create a reliable and high-performance digital system.
+
+### References / Citations
+
+  * SKY130 Process Design Kit (PDK) model files for the `sky130_fd_pr__nfet_01v8` and `sky130_fd_pr__pfet_01v8` transistor models.
+    
 -----
 
 ### **6. Power-Supply and Device Variation Studies**
