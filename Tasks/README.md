@@ -308,7 +308,7 @@ display
 
 #### Graph: CMOS Inverter VTC ($V_{out}$ vs. $V_{in}$)
 
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/5c0fcae1-a248-4f13-a392-4712b1772468" />
+<img width="1489" height="837" alt="image" src="https://github.com/user-attachments/assets/b44a4be1-3c3a-4b5d-9aa2-ab3ec82fe536" />
 
    The plot above shows the inverter's output voltage as a function of its input voltage. The curve exhibits a very sharp, high-gain transition between the high and low output states. The **switching threshold ($V_M$)** is marked at the point where the VTC curve intersects the line $V_{out} = V_{in}$. This point represents the theoretical switching point of the inverter. The PMOS used is `W=0.84u L=0.15u`, the NMOS used is `W=0.36u L=0.15u` with a capacitive load `50fF`.
 
@@ -326,7 +326,7 @@ meas dc vm find in when v(out)=v(in)
 
 ### Observations / Analysis
 
-  * **What you see**: The VTC plot shows a classic inverter characteristic: for low input voltages ($V_{in} \ll V_{DD}/2$), the output is high ($V_{out} \approx V_{DD}$). For high input voltages ($V_{in} \gg V_{DD}/2$), the output is low ($V_{out} \approx 0V$). The transition between these two states is very steep, indicating a high voltage gain in the transition region. The switching threshold ($V_M$) is typically found to be close to $V_{DD}/2$ for a symmetric inverter.
+  * **What you see**: The VTC plot shows a classic inverter characteristic: for low input voltages ($V_{in} \ll V_{DD}/2$), the output is high ($V_{out} \approx V_{DD}$). For high input voltages ($V_{in} \gg V_{DD}/2$), the output is low ($V_{out} \approx 0V$). The transition between these two states is very steep, indicating a high voltage gain in the transition region. The switching threshold ($V_M$) is typically found to be close to $V_{DD}/2$ for a symmetric inverter. As the $$\frac{W_p}{L_p} = \frac{0.84}{0.15} $$ and $$\frac{W_p}{L_p} = \frac{0.36}{0.15}$$ we can observe that the VTC graph is almost symmetric. 
 
   * **Why it happens (Device Physics)**: The behavior is governed by which transistor is "on" and which is "off."
 
@@ -334,11 +334,11 @@ meas dc vm find in when v(out)=v(in)
       * **When $V_{in}$ is high ($V_{DD}$)**: The NMOS gate-source voltage is $V_{DD}$, so it is strongly **on**, pulling the output node `vout` down to ground. The PMOS gate-source voltage is 0V, so it is in **cutoff**.
       * **During the transition (around $V_{in} \approx V_M$)**: Both the NMOS and PMOS transistors are simultaneously in their **saturation regions**, creating a direct path between $V_{DD}$ and ground. This causes a short-circuit current to flow and results in the high voltage gain (steep slope) of the characteristic.
 
-  * **How this ties back to STA**: The VTC is the foundation of digital logic levels. The switching threshold ($V_M$) and the steepness of the transition region define the **noise margins** of the gate. A well-defined $V_M$ and high noise margins ensure that the gate is robust against voltage fluctuations on its input. In Static Timing Analysis (STA), the input logic thresholds ($V_{IL}$, $V_{IH}$) used in timing libraries are directly derived from this VTC curve. These thresholds define the valid "0" and "1" logic levels and are critical for determining if a signal transition is valid.
+  * **How this ties back to STA**: The VTC is the foundation of digital logic levels. The switching threshold ($V_M$) and the steepness of the transition region define the **noise margins** of the gate. A well-defined $V_m$ and high noise margins ensure that the gate is robust against voltage fluctuations on its input. In Static Timing Analysis (STA), the input logic thresholds ($V_{IL}$, $V_{IH}$) used in timing libraries are directly derived from this VTC curve. These thresholds define the valid "0" and "1" logic levels and are critical for determining if a signal transition is valid.
 
 ### Conclusions
 
-The VTC experiment successfully characterized the DC switching behavior of the CMOS inverter, confirming its near-ideal properties as a logic gate. The sharp transition and well-defined output levels demonstrate its effectiveness in restoring signal integrity. The extracted switching threshold ($V_M$) is a fundamental parameter that not only defines the inverter's switching point but also serves as a critical input for creating the timing and noise models used in the design and verification of larger digital circuits. Any variation in this VTC due to process or environmental changes will directly impact the circuit's noise immunity and functional reliability.
+The VTC experiment successfully characterized the DC switching behavior of the CMOS inverter, confirming its near-ideal properties as a logic gate. The sharp transition and well-defined output levels demonstrate its effectiveness in restoring signal integrity. The extracted switching threshold ($V_M$) is a fundamental parameter that not only defines the inverter's switching point but also serves as a critical input for creating the timing and noise models used in the design and verification of digital circuits. Any variation in this VTC due to process or environmental changes will directly impact the circuit's noise immunity and functional reliability.
 
 ### References / Citations
 
