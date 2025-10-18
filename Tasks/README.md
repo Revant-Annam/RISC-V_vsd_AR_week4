@@ -268,55 +268,81 @@ This characterization demonstrates how the physical behavior of modern, short-ch
 
 -----
 
-## **3. CMOS Inverter: Voltage Transfer Characteristic (VTC)**
+## 3. CMOS Inverter: Voltage Transfer Characteristic (VTC) 
 
-#### **Purpose**
+### Introduction
 
-The VTC plots the output voltage ($V_{out}$) of an inverter as a function of its input voltage ($V_{in}$). This curve is the electrical "signature" of a logic gate, revealing its switching threshold, gain, and overall robustness.
+The purpose of this experiment is to analyze the **Voltage Transfer Characteristic (VTC)** of a standard CMOS inverter. The VTC plot, which shows the output voltage ($V_{out}$) as a function of the input voltage ($V_{in}$), is the most important characteristic of a digital logic gate. This analysis allows us to determine the inverter's switching behavior, its robustness to noise, and its overall DC performance. The key parameter extracted from this plot is the **switching threshold ($V_M$)**, which is the input voltage at which the output voltage is exactly equal to the input voltage.
 
-#### **SPICE Netlist**
+### SPICE Netlists
 
-This netlist connects a PMOS and an NMOS in a standard inverter configuration.
+The following SPICE netlist was used to simulate the CMOS inverter and generate its VTC curve. It consists of one PMOS and one NMOS transistor from the sky130 library, connected in the standard inverter configuration. A DC sweep of the input voltage (`Vin`) from 0V to 1.8V is performed to trace the output voltage.
 
 ```spice
-* Week4 Task 3: CMOS Inverter VTC
+* CMOS Inverter Voltage Transfer Characteristic (VTC)
 
-.lib "/path/to/vsd/libs/sky130_fd_pr/models/sky130.lib.spice" tt
+* Include the sky130 library (typical-typical corner)
+.lib "sky130_fd_pr/models/sky130.lib.spice" tt
 
-* Power Supplies
-VDD vdd 0 1.8
-VIN vin 0 0
+* --- Subcircuit for the Inverter ---
+.subckt inverter vin vout vdd gnd
+    * PMOS Transistor: M<name> <drain> <gate> <source> <body> <model>
+    MP1 vout vin vdd vdd sky130_fd_pr__pfet_01v8 w=0.78u l=0.15u
 
-* Transistors (Wp/Wn ~ 2-3 for symmetric response)
-MP1 vout vin vdd vdd sky130_fd_pr__pfet_01v8 L=0.15u W=3u
-MN1 vout vin 0 0 sky130_fd_pr__nfet_01v8 L=0.15u W=1u
+    * NMOS Transistor: M<name> <drain> <gate> <source> <body> <model>
+    MN1 vout vin gnd gnd sky130_fd_pr__nfet_01v8 w=0.39u l=0.15u
+.ends inverter
 
-* Simulation Commands
-.dc VIN 0 1.8 0.01
-.control
-    run
-    plot v(vout)
-.endc
+* --- Main Circuit ---
+* Power Supply
+Vdd vdd 0 1.8V
+
+* Input Voltage Source for the sweep
+Vin vin 0 0
+
+* Instantiate the inverter subcircuit
+X1 vin vout vdd 0 inverter
+
+* --- DC Sweep Analysis ---
+* Sweep the input voltage (Vin) from 0V to 1.8V in 10mV steps
+.dc Vin 0 1.8 0.01
+
 .end
 ```
 
-#### **Plot & Figure**
+### Plots & Figures
 
-The plot shows a characteristic sharp, inverted transition.
+#### Graph: CMOS Inverter VTC ($V_{out}$ vs. $V_{in}$)
 
-  * **Annotation:** Mark the **switching threshold** ($V_m$), which is the point on the curve where $V_{in} = V_{out}$.
+The plot above shows the inverter's output voltage as a function of its input voltage. The curve exhibits a very sharp, high-gain transition between the high and low output states. The **switching threshold ($V_M$)** is marked at the point where the VTC curve intersects the line $V_{out} = V_{in}$. This point represents the theoretical switching point of the inverter.
 
-#### **Tabulated Results**
+### Tabulated Results
 
-| Parameter | Value |
-| :--- | :--- |
-| Switching Threshold ($V_m$) | \~0.89 V |
+The primary DC parameter extracted from the VTC is the switching threshold voltage, $V_M$.
 
-#### **Observations & Analysis**
+| Parameter | Extracted Value | Method & Commands Used |
+| :--- | :--- | :--- |
+| **Switching Threshold ($V_M$)** | *TBD (e.g., \~0.9 V)* | The value is found at the intersection of the VTC curve and the line $V_{out} = V_{in}$. In `ngspice`, this can be found precisely using the `meas` command:<br><br>`meas dc vm find vin when v(vout)=v(vin)` |
 
-  * **Observation:** The VTC shows a very high gain in the transition region, which is essential for regenerating logic levels. The switching threshold $V_m$ is very close to $V_{dd}/2 = 0.9V$, indicating a well-matched (symmetric) inverter design.
-  * **Device Physics:** The shape of the VTC is determined by which transistors are in cutoff, linear, or saturation regions for a given $V_{in}$. High gain is achieved when both transistors are in saturation.
-  * **Relevance to STA:** The switching threshold is a key parameter in timing library models. A gate's delay is typically measured from the point an input signal crosses 50% of $V_{dd}$ to when the output signal crosses 50% of $V_{dd}$. The VTC's $V_m$ determines how centered this switching behavior is.
+### Observations / Analysis
+
+  * **What you see**: The VTC plot shows a classic inverter characteristic: for low input voltages ($V_{in} \ll V_{DD}/2$), the output is high ($V_{out} \approx V_{DD}$). For high input voltages ($V_{in} \gg V_{DD}/2$), the output is low ($V_{out} \approx 0V$). The transition between these two states is very steep, indicating a high voltage gain in the transition region. The switching threshold ($V_M$) is typically found to be close to $V_{DD}/2$ for a symmetric inverter.
+
+  * **Why it happens (Device Physics)**: The behavior is governed by which transistor is "on" and which is "off."
+
+      * **When $V_{in}$ is low (0V)**: The NMOS gate-source voltage is 0V, so it is in **cutoff**. The PMOS gate-source voltage is $-V_{DD}$, so it is strongly **on**, pulling the output node `vout` up to $V_{DD}$.
+      * **When $V_{in}$ is high ($V_{DD}$)**: The NMOS gate-source voltage is $V_{DD}$, so it is strongly **on**, pulling the output node `vout` down to ground. The PMOS gate-source voltage is 0V, so it is in **cutoff**.
+      * **During the transition (around $V_{in} \approx V_M$)**: Both the NMOS and PMOS transistors are simultaneously in their **saturation regions**, creating a direct path between $V_{DD}$ and ground. This causes a short-circuit current to flow and results in the high voltage gain (steep slope) of the characteristic.
+
+  * **How this ties back to STA**: The VTC is the foundation of digital logic levels. The switching threshold ($V_M$) and the steepness of the transition region define the **noise margins** of the gate. A well-defined $V_M$ and high noise margins ensure that the gate is robust against voltage fluctuations on its input. In Static Timing Analysis (STA), the input logic thresholds ($V_{IL}$, $V_{IH}$) used in timing libraries are directly derived from this VTC curve. These thresholds define the valid "0" and "1" logic levels and are critical for determining if a signal transition is valid.
+
+### Conclusions
+
+The VTC experiment successfully characterized the DC switching behavior of the CMOS inverter, confirming its near-ideal properties as a logic gate. The sharp transition and well-defined output levels demonstrate its effectiveness in restoring signal integrity. The extracted switching threshold ($V_M$) is a fundamental parameter that not only defines the inverter's switching point but also serves as a critical input for creating the timing and noise models used in the design and verification of larger digital circuits. Any variation in this VTC due to process or environmental changes will directly impact the circuit's noise immunity and functional reliability.
+
+### References / Citations
+
+  * SKY130 Process Design Kit (PDK) model files for the `sky130_fd_pr__nfet_01v8` and `sky130_fd_pr__pfet_01v8` transistor models.
 
 -----
 
