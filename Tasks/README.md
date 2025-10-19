@@ -520,30 +520,36 @@ These studies are critical for understanding how a simple logic gate maintains i
 This netlist uses the `.step` command to simulate the inverter's VTC at two different supply voltages: the nominal 1.8V and a reduced 0.8V.
 
 ```spice
-* CMOS Inverter VTC - Supply Variation
+*Model Description
+.param temp=27
 
+*Including sky130 library files
 .lib "sky130_fd_pr/models/sky130.lib.spice" tt
 
-.subckt inverter vin vout vdd gnd
-    MP1 vout vin vdd vdd sky130_fd_pr__pfet_01v8 w=0.78u l=0.15u
-    MN1 vout vin gnd gnd sky130_fd_pr__nfet_01v8 w=0.39u l=0.15u
-.ends inverter
+*Netlist Description
+XM1 out in vdd vdd sky130_fd_pr__pfet_01v8 w=1 l=0.15
+XM2 out in 0 0 sky130_fd_pr__nfet_01v8 w=0.36 l=0.15
 
-* Power Supply - its value is stepped
+Cload out 0 50fF
+
 Vdd vdd 0 1.8V
+Vin in 0 1.8V
 
-* Input Voltage Source for the sweep
-Vin vin 0 0
+.control
 
-* Instantiate the inverter subcircuit
-X1 vin vout vdd 0 inverter
+let powersupply = 1.8
+alter Vdd = powersupply
+	let voltagesupplyvariation = 0
+	dowhile voltagesupplyvariation < 6
+	dc Vin 0 1.8 0.01
+	let powersupply = powersupply - 0.2
+	alter Vdd = powersupply
+	let voltagesupplyvariation = voltagesupplyvariation + 1
+      end
 
-* DC Sweep Analysis of the input voltage
-.dc Vin 0 1.8 0.01
+plot dc1.out vs in dc2.out vs in dc3.out vs in dc4.out vs in dc5.out vs in dc6.out vs in xlabel "input voltage(V)" ylabel "output voltage(V)" title "Inveter dc characteristics as a function of supply voltage"
 
-* Use .step to run the entire .dc sweep for different Vdd values
-.step Vdd LIST 1.8 0.8
-
+.endc
 .end
 ```
 
@@ -552,27 +558,30 @@ X1 vin vout vdd 0 inverter
 This netlist uses the `.param` and `.step` commands to simulate the VTC for several different PMOS widths, demonstrating the effect of process variation on the switching threshold.
 
 ```spice
-* CMOS Inverter VTC - Device Variation (PMOS Width)
+*Model Description
+.param temp=27
 
+*Including sky130 library files
 .lib "sky130_fd_pr/models/sky130.lib.spice" tt
 
-.param WP=0.78u ; Default PMOS width
+*Netlist Description
+XM1 out in vdd vdd sky130_fd_pr__pfet_01v8 w=7 l=0.15
+XM2 out in 0 0 sky130_fd_pr__nfet_01v8 w=0.42 l=0.15
 
-.subckt inverter vin vout vdd gnd
-    * PMOS width is now a parameter
-    MP1 vout vin vdd vdd sky130_fd_pr__pfet_01v8 w=WP l=0.15u
-    MN1 vout vin gnd gnd sky130_fd_pr__nfet_01v8 w=0.39u l=0.15u
-.ends inverter
+Cload out 0 50fF
 
 Vdd vdd 0 1.8V
-Vin vin 0 0
-X1 vin vout vdd 0 inverter
+Vin in 0 1.8V
 
+*simulation commands
+.op
 .dc Vin 0 1.8 0.01
 
-* Use .step to run the VTC analysis for different PMOS widths
-.step param WP LIST 0.5u 0.78u 1.2u
-
+.control
+run
+setplot dc1
+display
+.endc
 .end
 ```
 
@@ -580,34 +589,54 @@ X1 vin vout vdd 0 inverter
 
 #### Graph 1: VTC under Supply Variation
 
-The plot shows the VTC for $V_{DD}=1.8V$ and $V_{DD}=0.8V$. While the overall shape is preserved, the curve for the lower supply voltage has a noticeably steeper transition region, indicating higher voltage gain.
+The plot shows the VTC for $V_{DD}=1.8V$ to $V_{DD}=0.8V$. While the overall shape is preserved, the curve for the lower supply voltage has a noticeably steeper transition region, indicating higher voltage gain. The gain plot shows that there is increase in the gain as the supply voltage decreases.
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/59094f8c-2c18-455e-964e-eae66bc9f865" />
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/f9bdb536-5de5-4355-b192-8d8662adc2e1" />
+
 
 #### Graph 2: VTC under Device Variation
 
-This plot shows three VTC curves for different PMOS widths (Wp). As the PMOS width increases relative to the NMOS width, the switching threshold ($V_M$) clearly shifts to the right (a higher voltage).
+This plot shows a VTC curve for PMOS width (Wp = 7). As the PMOS width increased drastically compared to the previous analysis, the switching threshold ($V_M$) clearly shifts to the right (a higher voltage) but the increase is very less when compared to the increase in width.
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/e1a5acb4-f265-4996-9f6f-6b9490108b3c" />
+
 
 ### Tabulated Results
 
-The effects of the variations on key inverter parameters are summarized below.
+The effects of the variations on key inverter parameters are summarized below. To find the peak gain for each simulation run, we can use the `setplot` command to select the specific dataset, followed by the `meas` command with the `min` function to find the minimum value of your pre-calculated gain vector. As the gain is negative, we can calculate the minimum value in the gain plot.
 
-| Variation Type | Parameter | Value | Effect |
-| :--- | :--- | :--- | :--- |
-| **Supply Variation** | $V_{DD}$ | 1.8 V | Nominal operation |
-| | | 0.8 V | VTC scales down, higher gain, much longer delay |
-| **Device Variation** | Wp/Wn Ratio | 0.5u / 0.39u | Lower switching threshold ($V_M$) |
-| | | 0.78u / 0.39u | Symmetric switching threshold ($V_M \approx V_{DD}/2$) |
-| | | 1.2u / 0.39u | Higher switching threshold ($V_M$) |
+The process of extracting the peak gain for each stepped simulation involves a sequence of commands:
+1.  **`setplot <plot_name>`**: This command selects the active dataset. Since the `.step` analysis creates multiple runs (`dc1`, `dc2`, etc.), you must use `setplot` to focus on one result set at a time.
+2.  **`let gain_vector = deriv(v(out)) / deriv(v(in))`**: This command calculates the gain at every point of the VTC curve and stores it in a new vector. This must be done for each plot context.
+3.  **`meas dc <result_name> min <gain_vector>`**: This is the measurement command. It finds the minimum value (the most negative gain) within the specified `gain_vector` for the active DC analysis and prints it to the console.
+
+| VDD | Peak Gain | Input Voltage at Peak Gain |
+| :--- | :--- | :------------ |
+| 1.8 V | **-11.51** | 0.86 V |
+| 1.6 V | **-11.99** | 0.77 V |
+| 1.4 V | **-12.38** | 0.67 V |
+| 1.2 V | **-13.10** | 0.59 V |
+| 1.0 V | **-13.39** | 0.52 V |
+| 0.8 V | **-12.75** | 0.45 V |
+
+As the data clearly shows, the magnitude of the inverter's peak gain generally increases as the supply voltage is lowered, confirming the trend observed in the plots. 
+
+| Parameter | Value | 
+| :--- | :--- | 
+| **Switching threshold $V_m$**| **0.9882076 V** |
 
 ### Observations / Analysis
 
   * **What you see**:
 
-    1.  **Supply Variation**: Lowering $V_{DD}$ from 1.8V to 0.8V scales the VTC down. The output still swings rail-to-rail, and the fundamental inverting functionality is perfectly preserved. Interestingly, the transition region becomes much steeper, indicating a higher voltage gain.
+    1.  **Supply Variation**: Lowering $V_{DD}$ from 1.8V to 0.8V scales the VTC down. The output still swings rail-to-rail, and the fundamental inverting functionality is perfectly preserved. Interestingly, the transition region becomes much steeper, indicating a higher voltage gain. As the supply voltage drops below `1 V` we can observe that the peak gain decreases. Another observation from the gain plot is that the **width of the negative gain pulse is wider for higher supply voltages** ($V_{DD}$) and becomes progressively **narrower and sharper for lower supply voltages**. 
     2.  **Device Variation**: Increasing the width of the PMOS transistor makes the pull-up network stronger than the pull-down network. This shifts the switching threshold ($V_M$) from below $V_{DD}/2$ to above $V_{DD}/2$. Despite this shift, the gate continues to function correctly as an inverter.
 
   * **Why it happens (Device Physics)**:
 
-    1.  **Supply Variation**: The CMOS inverter's rail-to-rail output is a structural property; as long as one transistor is fully on and the other is fully off, the output will be pulled to the supply rails, whatever their voltage. The increased gain at lower voltages occurs because the transistors operate with a smaller gate overdrive ($V_{gs} - V_t$), which pushes them deeper into saturation relative to the supply range, sharpening the transition.
+    1.  **Supply Variation**: The CMOS inverter's rail-to-rail output is a structural property; as long as one transistor is fully on and the other is fully off, the output will be pulled to the supply rails, whatever their voltage. The increased gain at lower voltages occurs because the transistors operate with a smaller gate overdrive ($V_{gs} - V_t$), which pushes them deeper into saturation relative to the supply range, sharpening the transition. The decrease in gain below the supply voltage of `1 V` happens because the supply voltage is unable to drive the transistors thus leading to a decrease in gain. The width of the gain pulse increases with increase in supply voltage occurs because the width is directly proportional to the **width of the inverter's high-gain transition region**, which is the range of input voltages where both the NMOS and PMOS transistors are simultaneously operating in their **saturation regions**.
     2.  **Device Variation**: The switching threshold ($V_M$) is the input voltage where the pull-up (PMOS) and pull-down (NMOS) currents are equal. By making the PMOS wider, it can supply more current. To match this higher current, the NMOS requires a stronger on signal, which means a higher input voltage. This directly causes the switching point ($V_M$) to increase.
 
   * **How this ties back to STA**: These variations are at the heart of Static Timing Analysis.
