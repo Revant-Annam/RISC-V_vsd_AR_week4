@@ -50,6 +50,24 @@ setplot dc1
 .end
 ```
 
+**Commands explained in brief:**
+
+* **`.param temp=27`**: Sets the simulation temperature to a default value of 27°C.
+* **`.lib "sky130_fd_pr/models/sky130.lib.spice" tt`**: Includes the external sky130 model library file and specifies the **`tt` (typical-typical)** process corner, which represents the average expected performance for both NMOS and PMOS devices.
+* **`XM1 Vdd n1 0 0 sky130_fd_pr__nfet_01v8 w=5 l=2`**: This instantiates the main device, an **NMOS transistor**, named `XM1`. It connects its drain to the `Vdd` node, gate to `n1`, and source/body to ground (`0`). It also defines its dimensions with a **width of 5µm and a length of 2µm.**
+* **`R1 n1 in 55`**: This creates a 55Ω **resistor** named `R1`, connecting the input source (`in`) to the transistor's gate (`n1`).
+* **`Vdd vdd 0 1.8V`**: Defines a 1.8V **DC voltage source** named `Vdd`, which provides the drain voltage.
+* **`Vin in 0 1.8V`**: Defines a 1.8V **DC voltage source** named `Vin`, which provides the gate voltage.
+* **`.op`**: This command instructs `ngspice` to perform a single **DC Operating Point** analysis. It's like taking one snapshot of the circuit's DC voltages and currents before any sweeps. 📸
+* **`.dc Vdd 0 1.8 0.1 Vin 0 1.8 0.2`**: This is the primary simulation command. It performs a **nested DC sweep** by sweeping the drain voltage (`Vdd`) from 0V to 1.8V for each step of the gate voltage (`Vin`) from 0V to 1.8V. This is what generates the family of I-V curves. 📈
+* **`.control ... .endc`**: This block contains a script of commands that `ngspice` runs automatically. 🤖
+* **`run`**: Executes the simulations defined above (`.op` and `.dc`).
+* **`display`**: Lists all the available simulation results (vectors like voltages and currents).
+* **`setplot dc1`**: Selects the dataset from the DC sweep (named `dc1` by default), making it the active context for plotting or measuring.
+* **`.end`**: This statement marks the end of the entire netlist file.
+
+**W/L of the NMOS:** 5/2
+
 ### Plots & Figures
 
 **Graph: $I_d$ vs $V_{ds}$ for NMOS (W/L = 5u/2u)**
@@ -188,6 +206,8 @@ setplot dc1
 .end
 ```
 
+**W/L of the NMOS:** 0.39/0.15
+
 ### Plots & Figures
 
 #### Graph 1: NMOS Output Characteristics ($I_d$ vs. $V_{ds}$) (W/L=0.39/0.15)
@@ -304,6 +324,15 @@ display
 .end
 ```
 
+This netlist has two new component types to build a complete **CMOS inverter**.
+
+* **`XM1 out in vdd vdd sky130_fd_pr__pfet_01v8 w=0.84 l=0.15`**: This defines a **PMOS transistor**. The drain of the PMOS is connected to the out, gate is connected to the in and the source/body is connected to the vdd.
+
+* **`Cload out 0 50fF`**: This defines a 50 femtofarad **capacitor** connected between out and 0.
+
+**W/L of the NMOS:** 0.36/0.15
+**W/L of the PMOS:** 0.84/0.15
+
 ### Plots & Figures
 
 #### Graph: CMOS Inverter VTC ($V_{out}$ vs. $V_{in}$)
@@ -379,6 +408,14 @@ run
 .endc
 .end
 ```
+
+This netlist uses two new commands that shift the analysis from a static DC behavior to a dynamic, time-based simulation.
+
+* `Vin in 0 PULSE(0V 1.8V 0 0.1ns 0.1ns 2ns 4ns)`: This creates a realistic digital input signal that switches between '0' and '1' over time. The parameters define the pulse's shape: initial voltage, high voltage, delay, rise time, fall time, pulse width, and period. 
+* `.tran 1n 10n`: It tells `ngspice` to calculate the circuit's node voltages and currents as they change over time, from 0 to 10 nanoseconds. This is the command to see how the inverter's output responds to the input pulse, allowing you to measure critical timing parameters like **rise and fall delays**. 
+
+**W/L of the NMOS:** 0.36/0.15
+**W/L of the PMOS:** 0.84/0.15
 
 ### Plots & Figures
 
@@ -456,6 +493,9 @@ display
 .endc
 .end
 ```
+
+**W/L of the NMOS:** 0.36/0.15
+**W/L of the NMOS:** 1/0.15
 
 ### Plots & Figures
 
@@ -552,6 +592,15 @@ plot dc1.out vs in dc2.out vs in dc3.out vs in dc4.out vs in dc5.out vs in dc6.o
 .endc
 .end
 ```
+This netlist introduces new commands within the `.control` block to automate a series of simulations and create a labeled plot.
+
+* **`let variable = value`**: Defines a new variable and assigns it a value for use within the script.
+* **`alter component = value`**: Modifies a parameter of a circuit component (like the voltage of `Vdd`) without having to restart the simulation.
+* **`dowhile condition ... end`**: Creates a loop that repeatedly executes the commands inside it as long as the specified `condition` is true.
+* **`plot ... xlabel "..." ylabel "..." title "..."`**: Generates a graph of the simulation results and adds a custom title and labels to the x and y axes.
+
+**W/L of the NMOS:** 0.36/0.15
+**W/L of the PMOS:** 1/0.15
 
 #### Netlist 2: Device Variation Analysis
 
@@ -584,6 +633,9 @@ display
 .endc
 .end
 ```
+
+**W/L of the PMOS:** 7/0.15 (almost 7x increase compared to the previous sizes)
+**W/L of the NMOS:** 0.42/0.15
 
 ### Plots & Figures
 
