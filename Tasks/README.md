@@ -4,7 +4,7 @@ This document outlines the practical steps to simulate the different characteris
 
 ## 1. MOSFET Behavior & $I_d$ vs. $V_{ds}$ Characteristics
 
-### Introduction / Background
+### Introduction 
 
 The purpose of this experiment is to characterize the fundamental behavior of an NMOS transistor from the sky130 Process Design Kit (PDK). 
 By generating the transistor's I-V curves—plotting the drain current ($I_d$) against the drain-to-source voltage ($V_{ds}$) for various gate-to-source voltages ($V_{gs}$)—we can visualize its three primary regions of operation 
@@ -18,7 +18,7 @@ Its main uses are to:
 
 This data is essential for creating the timing models used by Static Timing Analysis (STA) tools to predict the maximum clock speed of a chip.
 
-### SPICE Netlists / Code
+### SPICE Netlists 
 
 This netlist performs a nested sweep: the **outer loop** steps the gate voltage ($V_{gs}$) from 0V to 1.8V in 0.2V increments. For each of those gate voltage steps, the **inner loop** fully sweeps the drain voltage ($V_{ds}$) from 0V to 1.8V in 0.1V steps.
 
@@ -63,16 +63,16 @@ setplot dc1
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/e0707557-917d-4a8b-9134-652def811045" />
 <p align ="center"> $I_d$ v/s $V_{ds}$ cut off mode (current is in nA)</p>
 
-1.  **Cutoff Region:** At very low values of $V_{gs}$ the current should be very low which is true as we can see in the 3rd plot.  
+1.  **Cutoff Region:** As shown in the third plot, the current is very low at very low values of $V_{gs}$, which is the expected behavior.  
 2.  **Linear / Triode Region:** At low values of $V_{ds}$ (2nd plot), the drain current ($I_d$) increases sharply and almost linearly with $V_{ds}$.
 3.  **Saturation Region:** As $V_{ds}$ increases beyond a certain point ($V_{ds}$ > $V_{gs}$ - $V_{t}$ ), the drain current begins to flatten and becomes largely independent of $V_{ds}$.
 Here, the transistor acts as a voltage-controlled current source, where the current is primarily determined by $V_{gs}$.
-This is the primary operating region for digital switching. Here we can also observe that the current is slightly linear which is expected due to **channel length modulation**
+This is the primary operating region for digital switching. Here we can also observe a slight positive slope in the current, which is an expected effect of channel length modulation.
 
 ### Tabulated Results
 
 For $V_{ds}$ = 1.72V, the $V_{gs}$ sweep from 0V to 1.8V with 0.2 step.
-The table below is the drain currents to the voltage sweep $V_{gs}$.
+The table below lists the drain currents corresponding to the $V_{gs}$ voltage sweep.
 
 | Gate-Source Voltage ($V_{gs}$) | Drain Current ($I_d$) |
 | :--- | :--- | 
@@ -126,7 +126,7 @@ Any variations in this I-V behavior due to process, voltage, or temperature (PVT
 The purpose of these experiments is to characterize the fundamental electrical behavior of a short-channel NMOS transistor from the sky130 Process Design Kit (PDK). This characterization is crucial for understanding how modern, scaled-down transistors differ from ideal long-channel devices. Two primary analyses were performed:
 
 1.  **$I_d$ vs. $V_{ds}$ (Output Characteristics)**: This experiment aims to visualize the transistor's operational regions and observe the impact of **velocity saturation** on its current-driving capability.
-2.  **$I_d$ vs. $V_{gs}$ (Transfer Characteristics)**: This experiment is done to extract the transistor's **threshold voltage ($V_t$)**, a critical parameter that tells its turn-on point, using a method suitable for velocity-saturated devices(short-channel devices).
+2.  **$I_d$ vs. $V_{gs}$ (Transfer Characteristics)**: This experiment is done to extract the transistor's **threshold voltage ($V_t$)**, a critical parameter that tells its turn-on point, using a method suitable for velocity-saturated devices (short-channel devices).
 
 ### SPICE Netlists
 
@@ -206,7 +206,7 @@ This plot shows drain current ($I_d$) versus gate-to-source voltage ($V_{gs}$) f
 
 ### Tabulated Results
 
-The primary parameter extracted from these experiments is the transistor's threshold voltage for a short channel NMOS. This method is only possible for the short-channel device as the long channel device will have quadratic relation ($I_d$ vs. $V_{gs}$). The **threshold voltage ($V_t$)** for the NMOS transistor was extracted using the **Linear Extrapolation Method**. This technique was applied to the $I_d$ vs. $V_{gs}$ characteristic curve by programmatically finding the slope of the curve in its linear region and extrapolating to the x-axis. The entire process was done using the following sequence of `meas` commands. 
+The primary parameter extracted from these experiments is the transistor's threshold voltage for a short channel NMOS. This method is only possible for the short-channel device as the long channel device will have a quadratic relation ($I_d$ vs. $V_{gs}$). The **threshold voltage ($V_t$)** for the NMOS transistor was extracted using the **Linear Extrapolation Method**. This technique was applied to the $I_d$ vs. $V_{gs}$ characteristic curve by programmatically finding the slope of the curve in its linear region and extrapolating to the x-axis. The entire process was done using the following sequence of `meas` commands. 
 
 First, the drain current at $V_{gs}=1.2V$ was found using:
 
@@ -236,7 +236,7 @@ The resulting slope value was then used in the point-slope line equation to calc
 
   * **What you see**:
 
-    1.  From the **Graph 1**, we see the current saturates as expected. However, for a short-channel device, the current is lower than expected this is due to the velocity saturation. Also we can observe from the graph is that as the $V_{gs}$ increases the increase in $I_d$ is linear.
+    1.  From the **Graph 1**, we see the current saturates as expected. However, for a short-channel device, the current is lower than expected. This is due to velocity saturation. Also we can observe from the graph is that as $V_{gs}$ increases, the drain current $I_d$ increases linearly.
     2.  From the $I_d$ vs. $V_{gs}$ plot, we observe that after the transistor turns on, the drain current increases **linearly** with the gate voltage, rather than quadratically.
 
   * **Why it happens (Device Physics)**:
@@ -322,17 +322,17 @@ meas dc vm find in when v(out)=v(in)
 
 | Parameter | Extracted Value |
 | :--- | :----|
-| **Switching Threshold ($V_m$)** | **0.8769191V** | 
+| **Switching Threshold ($V_m$)** | **0.8769191 V** | 
 
 ### Observations / Analysis
 
-  * **What you see**: The VTC plot shows a classic inverter characteristic: for low input voltages ($V_{in} \ll V_{DD}/2$), the output is high ($V_{out} \approx V_{DD}$). For high input voltages ($V_{in} \gg V_{DD}/2$), the output is low ($V_{out} \approx 0V$). The transition between these two states is very steep, indicating a high voltage gain in the transition region. The switching threshold ($V_M$) is typically found to be close to $V_{DD}/2$ for a symmetric inverter. As the $$\frac{W_p}{L_p} = \frac{0.84}{0.15} $$ and $$\frac{W_n}{L_n} = \frac{0.36}{0.15}$$ which makes the resistance of the NMOS equal to that of PMOS so we can observe that the VTC graph is almost symmetric. 
+  * **What you see**: The VTC plot shows a classic inverter characteristic: for low input voltages ($V_{in} \ll V_{DD}/2$), the output is high ($V_{out} \approx V_{DD}$). For high input voltages ($V_{in} \gg V_{DD}/2$), the output is low ($V_{out} \approx 0V$). The transition between these two states is very steep, indicating a high voltage gain in the transition region. The switching threshold ($V_M$) is typically found to be close to $V_{DD}/2$ for a symmetric inverter. As the $$\frac{W_p}{L_p} = \frac{0.84}{0.15} $$ and $$\frac{W_n}{L_n} = \frac{0.36}{0.15}$$ which makes the resistance of the NMOS equal to that of the PMOS. As a result, we can observe that the VTC graph is almost symmetric. 
 
   * **Why it happens (Device Physics)**: The behavior is governed by which transistor is "on" and which is "off."
 
       * **When $V_{in}$ is low (0V)**: The NMOS gate-source voltage is 0V, so it is in **cutoff**. The PMOS gate-source voltage is $-V_{DD}$, so it is strongly **on**, pulling the output node `vout` up to $V_{DD}$.
       * **When $V_{in}$ is high ($V_{DD}$)**: The NMOS gate-source voltage is $V_{DD}$, so it is strongly **on**, pulling the output node `vout` down to ground. The PMOS gate-source voltage is 0V, so it is in **cutoff**.
-      * **During the transition (around $V_{in} \approx V_M$)**: Both the NMOS and PMOS transistors are simultaneously in their **saturation regions**, creating a direct path between $V_{DD}$ and ground. This causes a short-circuit current to flow and results in the high voltage gain (steep slope) of the characteristic.
+      * **During the transition (around $V_{in} \approx V_m$)**: Both the NMOS and PMOS transistors are simultaneously in their **saturation regions**, creating a direct path between $V_{DD}$ and ground. This causes a short-circuit current to flow and results in the high voltage gain (steep slope) of the characteristic.
 
   * **How this ties back to STA**: The VTC is the foundation of digital logic levels. The switching threshold ($V_M$) and the steepness of the transition region define the **noise margins** of the gate. A well-defined $V_m$ and high noise margins ensure that the gate is robust against voltage fluctuations on its input. In Static Timing Analysis (STA), the input logic thresholds ($V_{IL}$, $V_{IH}$) used in timing libraries are directly derived from this VTC curve. These thresholds define the valid "0" and "1" logic levels and are critical for determining if a signal transition is valid.
 
@@ -407,7 +407,7 @@ The key performance metrics extracted from the transient simulation are the rise
       * **Rise Delay ($t_{p,rise}$)**: When the input goes low, the PMOS transistor turns on and provides a saturation current ($I_{dsat,P}$) to charge the output capacitance up to $V_{DD}$.
         The fundamental relationship is $\Delta t \approx C_L \frac{\Delta V}{I}$. A larger load capacitance or a weaker transistor (lower drive current) will result in a longer delay. When the transistor is ON, it acts as a resistor and thus there is RC delay. 
 
-  * **How this ties back to STA**: **Propagation delay is the single most important metric in Static Timing Analysis (STA)**. The timing models (`.lib` files) used by STA tools are essentially complex lookup tables that contain pre-characterized delay values for each logic gate under various input transition times and output load capacitances. An STA tool calculates the total delay of a logic path by summing the propagation delays of all the gates along that path. The longest path, known as the **critical path**, determines the minimum clock period and thus the maximum operating frequency of the entire chip. This propagation delay is determined by the SPICE simulations which is then fed to the LUT's.
+  * **How this ties back to STA**: **Propagation delay is the single most important metric in Static Timing Analysis (STA)**. The timing models (`.lib` files) used by STA tools are essentially complex lookup tables that contain pre-characterized delay values for each logic gate under various input transition times and output load capacitances. An STA tool calculates the total delay of a logic path by summing the propagation delays of all the gates along that path. The longest path, known as the **critical path**, determines the minimum clock period and thus the maximum operating frequency of the entire chip. This propagation delay is determined by the SPICE simulations which is then fed to the LUTs.
 
 ### Conclusions
 
@@ -485,7 +485,7 @@ The key parameters extracted from the VTC are the logic level voltages and the r
 
 ### Observations / Analysis
 
-  * **What you see**: We can identify that there two distinct points on the curve where the slope is exactly -1, defining the input thresholds $V_{IL}$ and $V_{IH}$. The corresponding output voltages at these input points are defined as $V_{OH}$ and $V_{OL}$, respectively. These four points mark the boundaries of the valid operating regions for the inverter.
+  * **What you see**: We can identify that there are two distinct points on the curve where the slope is exactly -1, defining the input thresholds $V_{IL}$ and $V_{IH}$. The corresponding output voltages at these input points are defined as $V_{OH}$ and $V_{OL}$, respectively. These four points mark the boundaries of the valid operating regions for the inverter.
 
   * **Why it happens (Device Physics)**: The region between $V_{IL}$ and $V_{IH}$ is the high-gain transition region where both NMOS and PMOS transistors are in saturation. This high gain is what allows the inverter to amplify and restore signals. The points where the gain is exactly -1 represent the "edges" of this region, beyond which the gate's gain drops below unity. This property is what allows the inverter to reject noise; a small fluctuation on the input will be attenuated at the output, as long as the input stays within the valid logic '0' or '1' ranges. By changing the Wp/Wn ratio, we alter the relative strengths of the pull-up and pull-down networks, which shifts the switching threshold ($V_M$) and changes the values of $V_{IL}$ and $V_{IH}$, thereby affecting the noise margins.
 
@@ -598,14 +598,14 @@ The plot shows the VTC for $V_{DD}=1.8V$ to $V_{DD}=0.8V$. While the overall sha
 
 #### Graph 2: VTC under Device Variation
 
-This plot shows a VTC curve for PMOS width (Wp = 7). As the PMOS width increased drastically compared to the previous analysis, the switching threshold ($V_M$) clearly shifts to the right (a higher voltage) but the increase is very less when compared to the increase in width.
+This plot shows a VTC curve for PMOS width (Wp = 7). As the PMOS width increased drastically compared to the previous analysis, the switching threshold ($V_M$) clearly shifts to the right (a higher voltage) but the increase is very small when compared to the increase in width.
 
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/e1a5acb4-f265-4996-9f6f-6b9490108b3c" />
 
 
 ### Tabulated Results
 
-The effects of the variations on key inverter parameters are summarized below. To find the peak gain for each simulation run, we can use the `setplot` command to select the specific dataset, followed by the `meas` command with the `min` function to find the minimum value of your pre-calculated gain vector. As the gain is negative, we can calculate the minimum value in the gain plot.
+The effects of the variations on key inverter parameters are summarized below. To find the peak gain for each simulation run, we can use the `setplot` command to select the specific dataset, followed by the `meas` command with the `min` function to find the minimum value of your pre-calculated gain vector. Since gain is a negative value, the peak gain corresponds to the minimum value on the plot.
 
 The process of extracting the peak gain for each stepped simulation involves a sequence of commands:
 1.  **`setplot <plot_name>`**: This command selects the active dataset. Since the `.step` analysis creates multiple runs (`dc1`, `dc2`, etc.), you must use `setplot` to focus on one result set at a time.
@@ -631,12 +631,18 @@ As the data clearly shows, the magnitude of the inverter's peak gain generally i
 
   * **What you see**:
 
-    1.  **Supply Variation**: Lowering $V_{DD}$ from 1.8V to 0.8V scales the VTC down. The output still swings rail-to-rail, and the fundamental inverting functionality is perfectly preserved. Interestingly, the transition region becomes much steeper, indicating a higher voltage gain. As the supply voltage drops below `1 V` we can observe that the peak gain decreases. Another observation from the gain plot is that the **width of the negative gain pulse is wider for higher supply voltages** ($V_{DD}$) and becomes progressively **narrower and sharper for lower supply voltages**. 
+    1.  **Supply Variation**:
+       * Lowering $V_{DD}$ from 1.8V to 0.8V scales the VTC down. The output still swings rail-to-rail, and the fundamental inverting functionality is perfectly preserved. Interestingly, the transition region becomes much steeper, indicating a higher voltage gain.
+       * As the supply voltage drops below 1 V, we can observe that the peak gain decreases.
+       * Another observation from the gain plot is that the **width of the negative gain pulse is wider for higher supply voltages** ($V_{DD}$) and becomes progressively **narrower and sharper for lower supply voltages**. 
     2.  **Device Variation**: Increasing the width of the PMOS transistor makes the pull-up network stronger than the pull-down network. This shifts the switching threshold ($V_M$) from below $V_{DD}/2$ to above $V_{DD}/2$. Despite this shift, the gate continues to function correctly as an inverter.
 
   * **Why it happens (Device Physics)**:
 
-    1.  **Supply Variation**: The CMOS inverter's rail-to-rail output is a structural property; as long as one transistor is fully on and the other is fully off, the output will be pulled to the supply rails, whatever their voltage. The increased gain at lower voltages occurs because the transistors operate with a smaller gate overdrive ($V_{gs} - V_t$), which pushes them deeper into saturation relative to the supply range, sharpening the transition. The decrease in gain below the supply voltage of `1 V` happens because the supply voltage is unable to drive the transistors thus leading to a decrease in gain. The width of the gain pulse increases with increase in supply voltage occurs because the width is directly proportional to the **width of the inverter's high-gain transition region**, which is the range of input voltages where both the NMOS and PMOS transistors are simultaneously operating in their **saturation regions**.
+    1.  **Supply Variation**:
+       * The CMOS inverter's rail-to-rail output is a structural property; as long as one transistor is fully on and the other is fully off, the output will be pulled to the supply rails, whatever their voltage. The increased gain at lower voltages occurs because the transistors operate with a smaller gate overdrive ($V_{gs} - V_t$), which pushes them deeper into saturation relative to the supply range, sharpening the transition.
+       * The decrease in gain below the supply voltage of `1 V` happens because the supply voltage is unable to drive the transistors thus leading to a decrease in gain.
+       * The reason the gain pulse width increases with the supply voltage is that the width is directly proportional to the **width of the inverter's high-gain transition region**, which is the range of input voltages where both the NMOS and PMOS transistors are simultaneously operating in their **saturation regions**.
     2.  **Device Variation**: The switching threshold ($V_M$) is the input voltage where the pull-up (PMOS) and pull-down (NMOS) currents are equal. By making the PMOS wider, it can supply more current. To match this higher current, the NMOS requires a stronger on signal, which means a higher input voltage. This directly causes the switching point ($V_M$) to increase.
 
   * **How this ties back to STA**: These variations are at the heart of Static Timing Analysis.
