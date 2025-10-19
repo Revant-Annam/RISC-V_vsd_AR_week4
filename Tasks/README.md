@@ -461,7 +461,7 @@ display
 
 #### Graph: VTC with Noise Margin Annotations
 
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/2ea3fd8c-4c47-4ac1-9c8c-108568c702fa" />
+<img width="1608" height="904" alt="image" src="https://github.com/user-attachments/assets/768f979f-5150-47bc-b33a-c383fa592c9d" />
 
 The plot above shows the inverter's VTC. The key points for noise margin analysis are annotated:
 
